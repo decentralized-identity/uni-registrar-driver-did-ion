@@ -10,7 +10,6 @@ import org.erdtman.jcs.JsonCanonicalizer;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
-import java.text.ParseException;
 import java.util.Base64;
 
 public class SidetreeUtils {
@@ -33,8 +32,23 @@ public class SidetreeUtils {
 		return Base64.getUrlEncoder().withoutPadding().encodeToString(decoded);
 	}
 
-	public static String canonicalizeThenDoubleHashThenEncode(String jwkString) throws ParseException, IOException {
-		return canonicalizeThenDoubleHashThenEncode(JWK.parse(jwkString));
+	public static String canonicalizeThenDoubleHashThenEncode(String value) throws IOException {
+		JsonCanonicalizer jc = new JsonCanonicalizer(value);
+		byte[] hashed = Sha256Hash.hashTwice(jc.getEncodedString().getBytes(StandardCharsets.US_ASCII));
+		Multihash multihash = new Multihash(Multihash.Type.sha2_256, hashed);
+
+		return Base64.getUrlEncoder().withoutPadding().encodeToString(multihash.toBytes());
+	}
+
+	public static String canonicalizeThenHashThenEncode(String value) throws IOException {
+
+		// Used for hashing delta
+
+		JsonCanonicalizer jc = new JsonCanonicalizer(value);
+		byte[] hashed = Sha256Hash.hash(jc.getEncodedString().getBytes(StandardCharsets.US_ASCII));
+		Multihash multihash = new Multihash(Multihash.Type.sha2_256, hashed);
+
+		return Base64.getUrlEncoder().withoutPadding().encodeToString(multihash.toBytes());
 	}
 
 	public static String canonicalizeThenDoubleHashThenEncode(JWK jwk) throws IOException {
