@@ -21,6 +21,10 @@ public class PublicKeyModel {
 		this.purposes = purposes.clone();
 	}
 
+	public static Builder from() {
+		return new Builder();
+	}
+
 	public String getID() { return id; }
 
 	public String getType() { return type; }
@@ -58,29 +62,27 @@ public class PublicKeyModel {
 
 		private Builder() {}
 
-		public static Builder get() { return new Builder(); }
-
-		public Builder withPublicKeyJwk(JWK publicKeyJwk) {
+		public Builder publicKeyJwk(JWK publicKeyJwk) {
 			this.publicKeyJwk = publicKeyJwk;
 			return this;
 		}
 
-		public Builder withPurposes(String[] purposes) {
+		public Builder purposes(String[] purposes) {
 			this.purposes = purposes;
 			return this;
 		}
 
-		public Builder withId(String id) {
+		public Builder id(String id) {
 			this.id = id;
 			return this;
 		}
 
-		public Builder withType(String type) {
+		public Builder type(String type) {
 			this.type = type;
 			return this;
 		}
 
-		public PublicKeyModel build() {
+		public PublicKeyModel get() {
 			Objects.requireNonNull(publicKeyJwk);
 			return new PublicKeyModel(id == null ? DEFAULT_KEY_ID : id,
 									  type == null ? DEFAULT_KEY_TYPE : type,
