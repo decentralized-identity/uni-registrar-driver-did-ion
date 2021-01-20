@@ -3,8 +3,8 @@
          xmlns="http://maven.apache.org/POM/4.0.0"
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
 	<modelVersion>4.0.0</modelVersion>
-
 	<artifactId>uni-registrar-driver-did-ion</artifactId>
+	<packaging>${packaging.type}</packaging>
 	<version>0.1-SNAPSHOT</version>
 
 	<parent>
@@ -31,11 +31,12 @@
 	<properties>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 		<project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
-		<java.version>15</java.version>
-		<maven.compiler.source>15</maven.compiler.source>
-		<maven.compiler.target>15</maven.compiler.target>
+		<java.version>11</java.version>
+		<maven.compiler.source>11</maven.compiler.source>
+		<maven.compiler.target>11</maven.compiler.target>
 		<junit-jupiter.version>5.7.0</junit-jupiter.version>
 		<java-multihash.version>v1.3.0</java-multihash.version>
+
 		<!--		TODO: Move other dep. versions here-->
 	</properties>
 
@@ -102,6 +103,7 @@
 		<dependency>
 			<groupId>org.apache.logging.log4j</groupId>
 			<artifactId>log4j-slf4j-impl</artifactId>
+			<scope>test</scope>
 		</dependency>
 		<dependency>
 			<groupId>decentralized-identity</groupId>
@@ -172,7 +174,7 @@
 		<dependency>
 			<groupId>decentralized-identity</groupId>
 			<artifactId>jsonld-common-java</artifactId>
-			<version>0.2-SNAPSHOT</version>
+			<version>0.1-SNAPSHOT</version>
 			<scope>compile</scope>
 		</dependency>
 	</dependencies>
