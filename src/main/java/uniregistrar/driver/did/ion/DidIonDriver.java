@@ -207,16 +207,14 @@ public class DidIonDriver extends AbstractDriver {
 		// Put secrets
 
 		Map<String, Object> secrets = new LinkedHashMap<>();
-		secrets.put("signingKey", signingKey.toJSONString());
-		secrets.put("updateKey", updateKey.toJSONString());
-		secrets.put("recoveryKey", recoveryKey.toJSONString());
+		secrets.put("signingKey", signingKey.toJSONObject());
+		secrets.put("updateKey", updateKey.toJSONObject());
+		secrets.put("recoveryKey", recoveryKey.toJSONObject());
 
 //		state.setDidState();
 
 		state.setDidState(mapper.convertValue(jsonNode, new TypeReference<Map<String, Object>>() {}));
 		SetRegisterStateFinished.setStateFinished(state, jsonNode.get("didDocument").get("id").toString(), secrets);
-//
-//		SetRegisterState.setState(state, "unpublished");
 
 		return state;
 	}
