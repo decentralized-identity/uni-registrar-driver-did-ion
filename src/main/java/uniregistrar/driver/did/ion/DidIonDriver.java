@@ -214,7 +214,7 @@ public class DidIonDriver extends AbstractDriver {
 //		state.setDidState();
 
 		state.setDidState(mapper.convertValue(jsonNode, new TypeReference<Map<String, Object>>() {}));
-		SetRegisterStateFinished.setStateFinished(state, jsonNode.get("didDocument").get("id").toString(), secrets);
+		SetRegisterStateFinished.setStateFinished(state, jsonNode.get("didDocument").get("id").asText(), secrets);
 
 		return state;
 	}
