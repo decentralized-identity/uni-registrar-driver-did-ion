@@ -1,29 +1,41 @@
 package uniregistrar.driver.did.ion;
 
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.google.common.base.Strings;
+import foundation.identity.did.Service;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import uniregistrar.RegistrationException;
 import uniregistrar.driver.AbstractDriver;
+import uniregistrar.driver.did.ion.model.*;
+import uniregistrar.driver.did.ion.util.SidetreeUtils;
 import uniregistrar.request.DeactivateRequest;
 import uniregistrar.request.RegisterRequest;
 import uniregistrar.request.UpdateRequest;
 import uniregistrar.state.DeactivateState;
 import uniregistrar.state.RegisterState;
+import uniregistrar.state.SetRegisterStateFinished;
 import uniregistrar.state.UpdateState;
 
+import java.io.BufferedReader;
 import java.io.IOException;
+import java.io.InputStreamReader;
+import java.io.OutputStream;
 import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.ProtocolException;
 import java.net.URL;
-import java.util.HashMap;
-import java.util.Map;
+import java.nio.charset.StandardCharsets;
+import java.util.*;
 
 public class DidIonDriver extends AbstractDriver {
+	public static final int CONN_TIMEOUT = 5000; // ms
+	public static final int READ_TIMEOUT = 5000; // ms
 	private static final Logger log = LogManager.getLogger(DidIonDriver.class);
 	private static final String DEFAULT_API_URL = "http://localhost:3000/operations";
 	private static final ObjectMapper mapper;
@@ -93,13 +105,120 @@ public class DidIonDriver extends AbstractDriver {
 			throw new IllegalArgumentException(e);
 		}
 
+		con.setConnectTimeout(CONN_TIMEOUT);
+		con.setReadTimeout(READ_TIMEOUT);
 		con.setRequestProperty("Content-Type", "application/json; utf-8");
 		con.setRequestProperty("Accept", "application/json");
 		con.setDoOutput(true);
 
-		// TODO ...
+		// Create required keys. TODO: Accept public keys in secret
 
-		throw new RuntimeException("Not implemented.");
+		PrivateKeyModel signingKey = PrivateKeyModel.generateNewPrivateKey(PrivateKeyModel.KeyTag.SIGNING);
+		PrivateKeyModel updateKey = PrivateKeyModel.generateNewPrivateKey(PrivateKeyModel.KeyTag.UPDATE);
+		PrivateKeyModel recoveryKey = PrivateKeyModel.generateNewPrivateKey(PrivateKeyModel.KeyTag.RECOVERY);
+
+		// Obtain commitments from keys
+
+		String updateCommitment;
+		String recoveryCommitment;
+
+		try {
+			updateCommitment = SidetreeUtils.canonicalizeThenDoubleHashThenEncode(updateKey.getPublicKey());
+			recoveryCommitment = SidetreeUtils.canonicalizeThenDoubleHashThenEncode(recoveryKey.getPublicKey());
+		} catch (IOException e) {
+			log.error(e.getMessage(), e);
+			throw new RegistrationException("Key error!");
+		}
+
+		List<Service> services = request.getDidDocument().getServices();
+
+		Document document = new Document(Collections.singletonList(signingKey.getPublicKeyModel()),
+										 request.getDidDocument().getServices());
+		Patch patch = new Patch("replace", document);
+		Delta delta = new Delta(updateCommitment, Collections.singletonList(patch));
+		String deltaHash;
+		try {
+			deltaHash = SidetreeUtils.canonicalizeThenHashThenEncode(delta.toJSONString());
+		} catch (IOException e) {
+			log.error(e.getMessage(), e);
+			throw new RegistrationException("Canonicalization error!");
+		}
+		SuffixData suffixData = new SuffixData(deltaHash, recoveryCommitment);
+		CreateRequest createRequest = new CreateRequest("create", suffixData, delta);
+
+		log.debug("New ION did creation request prepared:\n{}", createRequest::toJSONString);
+
+		// Send creation request to the sidetree node
+
+		try (OutputStream os = con.getOutputStream()) {
+			byte[] input = createRequest.toJSONString().getBytes(StandardCharsets.UTF_8);
+			os.write(input, 0, input.length);
+		} catch (IOException e) {
+			log.error(e.getMessage(), e);
+			throw new RegistrationException("Sidetree node error!");
+		}
+
+
+		int status;
+		try {
+			status = con.getResponseCode();
+		} catch (IOException e) {
+			log.error(e.getMessage(), e);
+			throw new RegistrationException("Sidetree node issue!");
+		}
+
+		if (status != 200) {
+			throw new RegistrationException("Sidetree API issue. Got response code (" + status + ")");
+		}
+
+
+		// Read the response
+
+		StringBuilder response;
+		try (BufferedReader br = new BufferedReader(
+				new InputStreamReader(con.getInputStream(), StandardCharsets.UTF_8))) {
+			response = new StringBuilder();
+			String responseLine;
+			while ((responseLine = br.readLine()) != null) {
+				response.append(responseLine.trim());
+			}
+		} catch (IOException e) {
+			log.error(e.getMessage(), e);
+			throw new RegistrationException("Sidetree node error!");
+		}
+
+		con.disconnect();
+
+		ObjectNode jsonNode;
+		try {
+			jsonNode = (ObjectNode) mapper.readTree(response.toString());
+		} catch (JsonProcessingException e) {
+			log.error(e.getMessage(), e);
+			throw new RegistrationException("Response is not parseable");
+		}
+
+		// Extract Method Metadata
+
+		RegisterState state = RegisterState.build();
+		Map<String, Object> methodMetadata = mapper.convertValue(jsonNode.get("methodMetadata"), new TypeReference<Map<String, Object>>() {});
+		state.setMethodMetadata(methodMetadata);
+		jsonNode.remove("methodMetadata"); // Remove to prevent duplication
+
+		// Put secrets
+
+		Map<String, Object> secrets = new LinkedHashMap<>();
+		secrets.put("signingKey", signingKey.toJSONString());
+		secrets.put("updateKey", updateKey.toJSONString());
+		secrets.put("recoveryKey", recoveryKey.toJSONString());
+
+//		state.setDidState();
+
+		state.setDidState(mapper.convertValue(jsonNode, new TypeReference<Map<String, Object>>() {}));
+		SetRegisterStateFinished.setStateFinished(state, jsonNode.get("didDocument").get("id").toString(), secrets);
+//
+//		SetRegisterState.setState(state, "unpublished");
+
+		return state;
 	}
 
 	@Override
