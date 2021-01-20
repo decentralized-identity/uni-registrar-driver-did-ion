@@ -1,6 +1,6 @@
 # Dockerfile for universalregistrar/driver-did-ion
 
-FROM maven:3-jdk-15
+FROM maven:3-openjdk-15
 MAINTAINER Markus Sabadello <markus@danubetech.com>
 
 USER root
