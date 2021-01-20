@@ -35,8 +35,17 @@ public class Document {
 			o.put("publicKeys", publicKeyModels.stream().map(PublicKeyModel::toJSONObject).collect(Collectors.toList()));
 		}
 		if (services != null) {
-			o.put("services", services.stream().map(Service::toJson).collect(Collectors.toList()));
+			o.put("services", services.stream().map(Document::getServiceModel).collect(Collectors.toList()));
 		}
 		return o;
+	}
+
+	public static Map<String, Object> getServiceModel(Service service) {
+		Map<String, Object> serviceMap = new LinkedHashMap<>();
+		serviceMap.put("type", service.getType());
+		serviceMap.put("id", service.getId().toString());
+		serviceMap.put("serviceEndpoint", service.getServiceEndpoint());
+
+		return serviceMap;
 	}
 }
