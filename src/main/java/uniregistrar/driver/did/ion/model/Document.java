@@ -1,12 +1,42 @@
 package uniregistrar.driver.did.ion.model;
 
+import com.nimbusds.jose.util.JSONObjectUtils;
+import foundation.identity.did.Service;
+
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
+
 public class Document {
-	private PublicKeyModel[] publicKeyModels;
-	private Service[] services;
+	private List<PublicKeyModel> publicKeyModels;
+	private List<Service> services;
 
-	public PublicKeyModel[] getPublicKeys() { return publicKeyModels; }
-	public void setPublicKeys(PublicKeyModel[] value) { this.publicKeyModels = value; }
+	public Document(List<PublicKeyModel> publicKeyModels, List<Service> services) {
+		this.publicKeyModels = publicKeyModels;
+		this.services = services;
+	}
 
-	public Service[] getServices() { return services; }
-	public void setServices(Service[] value) { this.services = value; }
+	public List<PublicKeyModel> getPublicKeys() { return publicKeyModels; }
+
+	public void setPublicKeys(List<PublicKeyModel> value) { this.publicKeyModels = value; }
+
+	public List<Service> getServices() { return services; }
+
+	public void setServices(List<Service> value) { this.services = value; }
+
+	public String toJSONString() {
+		return JSONObjectUtils.toJSONString(toJSONObject());
+	}
+
+	public Map<String, Object> toJSONObject() {
+		Map<String, Object> o = new LinkedHashMap<>();
+		if (publicKeyModels != null) {
+			o.put("publicKeys", publicKeyModels.stream().map(PublicKeyModel::toJSONObject).collect(Collectors.toList()));
+		}
+		if (services != null) {
+			o.put("services", services.stream().map(Service::toJson).collect(Collectors.toList()));
+		}
+		return o;
+	}
 }

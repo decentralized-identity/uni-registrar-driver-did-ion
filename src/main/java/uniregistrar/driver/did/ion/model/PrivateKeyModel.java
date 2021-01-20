@@ -4,6 +4,8 @@ package uniregistrar.driver.did.ion.model;
 import com.nimbusds.jose.jwk.JWK;
 import uniregistrar.driver.did.ion.util.SidetreeUtils;
 
+import java.util.Map;
+
 public class PrivateKeyModel {
 	private final KeyTag keyTag;
 	private final JWK privateKey;
@@ -55,6 +57,10 @@ public class PrivateKeyModel {
 		return new PrivateKeyModel(keyTag, jwk, pkm);
 	}
 
+	public JWK getPublicKey() {
+		return privateKey.toPublicJWK();
+	}
+
 	public KeyTag getKeyTag() {
 		return keyTag;
 	}
@@ -65,6 +71,14 @@ public class PrivateKeyModel {
 
 	public PublicKeyModel getPublicKeyModel() {
 		return publicKeyModel;
+	}
+
+	public String toJSONString() {
+		return privateKey.toJSONString();
+	}
+
+	public Map<String, Object> toJSONObject() {
+		return privateKey.toJSONObject();
 	}
 
 

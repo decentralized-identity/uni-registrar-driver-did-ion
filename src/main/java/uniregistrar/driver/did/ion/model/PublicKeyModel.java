@@ -8,7 +8,6 @@ import java.util.Map;
 import java.util.Objects;
 
 public class PublicKeyModel {
-
 	private final JWK publicKeyJwk;
 	private final String[] purposes;
 	private final String id;
@@ -45,12 +44,9 @@ public class PublicKeyModel {
 		o.put("purposes", purposes);
 
 		return o;
-
 	}
 
-
 	public static final class Builder {
-
 		public static final String DEFAULT_KEY_ID = "signingKey";
 		public static final String DEFAULT_KEY_TYPE = "EcdsaSecp256k1VerificationKey2019";
 		public static final String[] DEFAULT_PURPOSES = {"authentication", "assertionMethod", "capabilityInvocation", "capabilityDelegation", "keyAgreement"};
