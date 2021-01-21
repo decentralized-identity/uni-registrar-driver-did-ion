@@ -22,7 +22,7 @@ public class PublicKeyModel {
 
 	}
 
-	public static Builder from() {
+	public static Builder builder() {
 		return new Builder();
 	}
 
@@ -81,7 +81,7 @@ public class PublicKeyModel {
 			return this;
 		}
 
-		public PublicKeyModel get() {
+		public PublicKeyModel build() {
 			Objects.requireNonNull(publicKeyJwk);
 			return new PublicKeyModel(id == null ? DEFAULT_KEY_ID : id,
 									  type == null ? DEFAULT_KEY_TYPE : type,

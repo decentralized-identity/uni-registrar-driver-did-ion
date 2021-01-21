@@ -4,12 +4,16 @@ import com.danubetech.keyformats.PrivateKey_to_JWK;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
 import com.nimbusds.jose.jwk.JWK;
+import foundation.identity.did.DIDDocument;
+import foundation.identity.did.VerificationMethod;
 import org.bitcoinj.core.ECKey;
 import uniregistrar.driver.did.ion.model.PublicKeyModel;
 
 import java.text.ParseException;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -24,6 +28,43 @@ public class KeyUtils {
 	public static JWK generateEs256kKeyPairInJwk() {
 		ECKey key = new ECKey();
 		return PrivateKey_to_JWK.secp256k1PrivateKey_to_JWK(key, null, null);
+	}
+
+	public static List<PublicKeyModel> extractPublicKeyModels(DIDDocument didDocument) {
+		Preconditions.checkNotNull(didDocument);
+
+		if (didDocument.getVerificationMethods() == null) {
+			return null;
+		}
+
+		List<PublicKeyModel> keys = new LinkedList<>();
+
+		for (VerificationMethod vm : didDocument.getVerificationMethods()) {
+			JWK jwk = null;
+			if (vm.getPublicKeyJwk() != null) {
+				try {
+					jwk = JWK.parse(vm.getPublicKeyJwk());
+				} catch (ParseException ignored) {
+				}
+			}
+
+			// TODO: Check other key formats
+
+
+			int counter = 0;
+
+			if (jwk != null) {
+				PublicKeyModel pkm = PublicKeyModel.builder()
+												   .id(vm.getId() == null ? "custom" + counter : vm.getId().toString())
+												   .type(vm.getType())
+												   .publicKeyJwk(jwk)
+												   .build();
+
+				keys.add(pkm);
+			}
+		}
+
+		return keys;
 	}
 
 	public static Optional<PublicKeyModel> extractPublicKeyModel(KeyTag keyTag, Map<String, Object> secret) {
@@ -58,13 +99,13 @@ public class KeyUtils {
 			return Optional.empty();
 		}
 
-		PublicKeyModel pkm = PublicKeyModel.from()
+		PublicKeyModel pkm = PublicKeyModel.builder()
 										   .publicKeyJwk(pkj)
 										   .id(keyId)
 										   .type(found.get("type") == null ? null : found.get("type").asText())
 										   .purposes(found.get("purposes") == null ? null :
 													 mapper.convertValue(found.get("purposes"), new TypeReference<List<String>>() {}))
-										   .get();
+										   .build();
 		return Optional.of(pkm);
 	}
 

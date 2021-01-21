@@ -118,9 +118,9 @@ public class DidIonDriver extends AbstractDriver {
 		Optional<PublicKeyModel> upk = KeyUtils.extractPublicKeyModel(KeyUtils.KeyTag.UPDATE, request.getSecret());
 		Optional<PublicKeyModel> rpk = KeyUtils.extractPublicKeyModel(KeyUtils.KeyTag.RECOVERY, request.getSecret());
 
-		PublicKeyModel signingKeyPublic = null;
-		PublicKeyModel updateKeyPublic = null;
-		PublicKeyModel recoveryKeyPublic = null;
+		PublicKeyModel signingKeyPublic;
+		PublicKeyModel updateKeyPublic;
+		PublicKeyModel recoveryKeyPublic;
 
 		PrivateKeyModel signingKey = null;
 		PrivateKeyModel updateKey = null;
@@ -165,7 +165,17 @@ public class DidIonDriver extends AbstractDriver {
 
 		List<Service> services = request.getDidDocument().getServices();
 
-		Document document = new Document(Collections.singletonList(signingKeyPublic),
+
+		List<PublicKeyModel> publicKeyModels = new LinkedList<>();
+		publicKeyModels.add(signingKeyPublic);
+
+		List<PublicKeyModel> fromDidDoc = KeyUtils.extractPublicKeyModels(request.getDidDocument());
+		if (fromDidDoc != null) {
+			publicKeyModels.addAll(fromDidDoc);
+		}
+
+
+		Document document = new Document(publicKeyModels,
 										 request.getDidDocument().getServices());
 		Patch patch = new Patch("replace", document);
 		Delta delta = new Delta(updateCommitment, Collections.singletonList(patch));

@@ -20,40 +20,40 @@ public class PrivateKeyModel {
 
 	public static PrivateKeyModel generateNewPrivateKey(KeyUtils.KeyTag keyTag) {
 		JWK jwk = KeyUtils.generateEs256kKeyPairInJwk();
-		PublicKeyModel pkm = PublicKeyModel.from()
+		PublicKeyModel pkm = PublicKeyModel.builder()
 										   .publicKeyJwk(jwk.toPublicJWK())
-										   .get();
+										   .build();
 
 		return new PrivateKeyModel(keyTag, jwk, pkm);
 	}
 
 	public static PrivateKeyModel generateNewPrivateKey(KeyUtils.KeyTag keyTag, List<String> purposes) {
 		JWK jwk = KeyUtils.generateEs256kKeyPairInJwk();
-		PublicKeyModel pkm = PublicKeyModel.from()
+		PublicKeyModel pkm = PublicKeyModel.builder()
 										   .publicKeyJwk(jwk.toPublicJWK())
 										   .purposes(purposes)
-										   .get();
+										   .build();
 
 		return new PrivateKeyModel(keyTag, jwk, pkm);
 	}
 
 	public static PrivateKeyModel generateNewPrivateKey(KeyUtils.KeyTag keyTag, List<String> purposes, String type) {
 		JWK jwk = KeyUtils.generateEs256kKeyPairInJwk();
-		PublicKeyModel pkm = PublicKeyModel.from()
+		PublicKeyModel pkm = PublicKeyModel.builder()
 										   .publicKeyJwk(jwk.toPublicJWK())
 										   .purposes(purposes)
 										   .type(type)
-										   .get();
+										   .build();
 
 		return new PrivateKeyModel(keyTag, jwk, pkm);
 	}
 
 	public static PrivateKeyModel generateNewPrivateKey(KeyUtils.KeyTag keyTag, String type) {
 		JWK jwk = KeyUtils.generateEs256kKeyPairInJwk();
-		PublicKeyModel pkm = PublicKeyModel.from()
+		PublicKeyModel pkm = PublicKeyModel.builder()
 										   .publicKeyJwk(jwk.toPublicJWK())
 										   .type(type)
-										   .get();
+										   .build();
 
 		return new PrivateKeyModel(keyTag, jwk, pkm);
 	}
