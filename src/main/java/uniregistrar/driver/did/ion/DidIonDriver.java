@@ -112,11 +112,43 @@ public class DidIonDriver extends AbstractDriver {
 		con.setRequestProperty("Accept", "application/json");
 		con.setDoOutput(true);
 
-		// Create required keys. TODO: Accept public keys in secret
+		// Create required keys.
 
-		PrivateKeyModel signingKey = PrivateKeyModel.generateNewPrivateKey(KeyUtils.KeyTag.SIGNING);
-		PrivateKeyModel updateKey = PrivateKeyModel.generateNewPrivateKey(KeyUtils.KeyTag.UPDATE);
-		PrivateKeyModel recoveryKey = PrivateKeyModel.generateNewPrivateKey(KeyUtils.KeyTag.RECOVERY);
+		Optional<PublicKeyModel> spk = KeyUtils.extractPublicKeyModel(KeyUtils.KeyTag.SIGNING, request.getSecret());
+		Optional<PublicKeyModel> upk = KeyUtils.extractPublicKeyModel(KeyUtils.KeyTag.UPDATE, request.getSecret());
+		Optional<PublicKeyModel> rpk = KeyUtils.extractPublicKeyModel(KeyUtils.KeyTag.RECOVERY, request.getSecret());
+
+		PublicKeyModel signingKeyPublic = null;
+		PublicKeyModel updateKeyPublic = null;
+		PublicKeyModel recoveryKeyPublic = null;
+
+		PrivateKeyModel signingKey = null;
+		PrivateKeyModel updateKey = null;
+		PrivateKeyModel recoveryKey = null;
+
+		if (spk.isPresent()) {
+			signingKeyPublic = spk.get();
+		}
+		else {
+			signingKey = PrivateKeyModel.generateNewPrivateKey(KeyUtils.KeyTag.SIGNING);
+			signingKeyPublic = signingKey.getPublicKeyModel();
+		}
+
+		if (upk.isPresent()) {
+			updateKeyPublic = upk.get();
+		}
+		else {
+			updateKey = PrivateKeyModel.generateNewPrivateKey(KeyUtils.KeyTag.UPDATE);
+			updateKeyPublic = updateKey.getPublicKeyModel();
+		}
+
+		if (rpk.isPresent()) {
+			recoveryKeyPublic = rpk.get();
+		}
+		else {
+			recoveryKey = PrivateKeyModel.generateNewPrivateKey(KeyUtils.KeyTag.RECOVERY);
+			recoveryKeyPublic = recoveryKey.getPublicKeyModel();
+		}
 
 		// Obtain commitments from keys
 
@@ -124,8 +156,8 @@ public class DidIonDriver extends AbstractDriver {
 		String recoveryCommitment;
 
 		try {
-			updateCommitment = SidetreeUtils.canonicalizeThenDoubleHashThenEncode(updateKey.getPublicKey());
-			recoveryCommitment = SidetreeUtils.canonicalizeThenDoubleHashThenEncode(recoveryKey.getPublicKey());
+			updateCommitment = SidetreeUtils.canonicalizeThenDoubleHashThenEncode(updateKeyPublic.getPublicKeyJwk());
+			recoveryCommitment = SidetreeUtils.canonicalizeThenDoubleHashThenEncode(recoveryKeyPublic.getPublicKeyJwk());
 		} catch (IOException e) {
 			log.error(e.getMessage(), e);
 			throw new RegistrationException("Key error!");
@@ -133,7 +165,7 @@ public class DidIonDriver extends AbstractDriver {
 
 		List<Service> services = request.getDidDocument().getServices();
 
-		Document document = new Document(Collections.singletonList(signingKey.getPublicKeyModel()),
+		Document document = new Document(Collections.singletonList(signingKeyPublic),
 										 request.getDidDocument().getServices());
 		Patch patch = new Patch("replace", document);
 		Delta delta = new Delta(updateCommitment, Collections.singletonList(patch));
@@ -208,9 +240,15 @@ public class DidIonDriver extends AbstractDriver {
 		// Put secrets
 
 		Map<String, Object> secrets = new LinkedHashMap<>();
-		secrets.put("signingKey", signingKey.toJSONObject());
-		secrets.put("updateKey", updateKey.toJSONObject());
-		secrets.put("recoveryKey", recoveryKey.toJSONObject());
+		if (signingKey != null) {
+			secrets.put("signingKey", signingKey.toJSONObject());
+		}
+		if (updateKey != null) {
+			secrets.put("updateKey", updateKey.toJSONObject());
+		}
+		if (recoveryKey != null) {
+			secrets.put("recoveryKey", recoveryKey.toJSONObject());
+		}
 
 //		state.setDidState();
 

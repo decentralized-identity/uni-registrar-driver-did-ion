@@ -27,7 +27,7 @@ public class KeyUtils {
 	}
 
 	public static Optional<PublicKeyModel> extractPublicKeyModel(KeyTag keyTag, Map<String, Object> secret) {
-		if (!secret.containsKey("publicKeys") || secret.get("publicKeys") == null) {
+		if (secret == null || !secret.containsKey("publicKeys") || secret.get("publicKeys") == null) {
 			return Optional.empty();
 		}
 
