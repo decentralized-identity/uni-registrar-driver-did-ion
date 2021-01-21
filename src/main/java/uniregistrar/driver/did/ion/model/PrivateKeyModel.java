@@ -2,23 +2,24 @@ package uniregistrar.driver.did.ion.model;
 
 
 import com.nimbusds.jose.jwk.JWK;
-import uniregistrar.driver.did.ion.util.SidetreeUtils;
+import uniregistrar.driver.did.ion.util.KeyUtils;
 
+import java.util.List;
 import java.util.Map;
 
 public class PrivateKeyModel {
-	private final KeyTag keyTag;
+	private final KeyUtils.KeyTag keyTag;
 	private final JWK privateKey;
 	private final PublicKeyModel publicKeyModel;
 
-	public PrivateKeyModel(KeyTag keyTag, JWK privateKey, PublicKeyModel publicKeyModel) {
+	public PrivateKeyModel(KeyUtils.KeyTag keyTag, JWK privateKey, PublicKeyModel publicKeyModel) {
 		this.keyTag = keyTag;
 		this.privateKey = privateKey;
 		this.publicKeyModel = publicKeyModel;
 	}
 
-	public static PrivateKeyModel generateNewPrivateKey(KeyTag keyTag) {
-		JWK jwk = SidetreeUtils.generateEs256kKeyPairInJwk();
+	public static PrivateKeyModel generateNewPrivateKey(KeyUtils.KeyTag keyTag) {
+		JWK jwk = KeyUtils.generateEs256kKeyPairInJwk();
 		PublicKeyModel pkm = PublicKeyModel.from()
 										   .publicKeyJwk(jwk.toPublicJWK())
 										   .get();
@@ -26,8 +27,8 @@ public class PrivateKeyModel {
 		return new PrivateKeyModel(keyTag, jwk, pkm);
 	}
 
-	public static PrivateKeyModel generateNewPrivateKey(KeyTag keyTag, String[] purposes) {
-		JWK jwk = SidetreeUtils.generateEs256kKeyPairInJwk();
+	public static PrivateKeyModel generateNewPrivateKey(KeyUtils.KeyTag keyTag, List<String> purposes) {
+		JWK jwk = KeyUtils.generateEs256kKeyPairInJwk();
 		PublicKeyModel pkm = PublicKeyModel.from()
 										   .publicKeyJwk(jwk.toPublicJWK())
 										   .purposes(purposes)
@@ -36,8 +37,8 @@ public class PrivateKeyModel {
 		return new PrivateKeyModel(keyTag, jwk, pkm);
 	}
 
-	public static PrivateKeyModel generateNewPrivateKey(KeyTag keyTag, String[] purposes, String type) {
-		JWK jwk = SidetreeUtils.generateEs256kKeyPairInJwk();
+	public static PrivateKeyModel generateNewPrivateKey(KeyUtils.KeyTag keyTag, List<String> purposes, String type) {
+		JWK jwk = KeyUtils.generateEs256kKeyPairInJwk();
 		PublicKeyModel pkm = PublicKeyModel.from()
 										   .publicKeyJwk(jwk.toPublicJWK())
 										   .purposes(purposes)
@@ -47,8 +48,8 @@ public class PrivateKeyModel {
 		return new PrivateKeyModel(keyTag, jwk, pkm);
 	}
 
-	public static PrivateKeyModel generateNewPrivateKey(KeyTag keyTag, String type) {
-		JWK jwk = SidetreeUtils.generateEs256kKeyPairInJwk();
+	public static PrivateKeyModel generateNewPrivateKey(KeyUtils.KeyTag keyTag, String type) {
+		JWK jwk = KeyUtils.generateEs256kKeyPairInJwk();
 		PublicKeyModel pkm = PublicKeyModel.from()
 										   .publicKeyJwk(jwk.toPublicJWK())
 										   .type(type)
@@ -61,7 +62,7 @@ public class PrivateKeyModel {
 		return privateKey.toPublicJWK();
 	}
 
-	public KeyTag getKeyTag() {
+	public KeyUtils.KeyTag getKeyTag() {
 		return keyTag;
 	}
 
@@ -82,7 +83,4 @@ public class PrivateKeyModel {
 	}
 
 
-	public enum KeyTag {
-		UPDATE, RECOVERY, SIGNING
-	}
 }

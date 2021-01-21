@@ -3,21 +3,23 @@ package uniregistrar.driver.did.ion.model;
 import com.nimbusds.jose.jwk.JWK;
 import com.nimbusds.jose.util.JSONObjectUtils;
 
-import java.util.LinkedHashMap;
-import java.util.Map;
-import java.util.Objects;
+import java.util.*;
 
 public class PublicKeyModel {
-	private final JWK publicKeyJwk;
-	private final String[] purposes;
-	private final String id;
-	private final String type;
+	private JWK publicKeyJwk;
+	private List<String> purposes;
+	private String id;
+	private String type;
 
-	public PublicKeyModel(String id, String type, JWK publicKeyJwk, String[] purposes) {
+	public PublicKeyModel(String id, String type, JWK publicKeyJwk, List<String> purposes) {
 		this.id = id;
 		this.type = type;
 		this.publicKeyJwk = publicKeyJwk;
-		this.purposes = purposes.clone();
+		this.purposes = purposes;
+	}
+
+	public PublicKeyModel() {
+
 	}
 
 	public static Builder from() {
@@ -30,7 +32,7 @@ public class PublicKeyModel {
 
 	public JWK getPublicKeyJwk() { return publicKeyJwk; }
 
-	public String[] getPurposes() { return purposes.clone(); }
+	public List<String> getPurposes() { return purposes; }
 
 	public String toJSONString() {
 		return JSONObjectUtils.toJSONString(toJSONObject());
@@ -49,10 +51,11 @@ public class PublicKeyModel {
 	public static final class Builder {
 		public static final String DEFAULT_KEY_ID = "signingKey";
 		public static final String DEFAULT_KEY_TYPE = "EcdsaSecp256k1VerificationKey2019";
-		public static final String[] DEFAULT_PURPOSES = {"authentication", "assertionMethod", "capabilityInvocation", "capabilityDelegation", "keyAgreement"};
+		public static final List<String> DEFAULT_PURPOSES = Arrays.asList("authentication", "assertionMethod", "capabilityInvocation",
+																		  "capabilityDelegation", "keyAgreement");
 
 		private JWK publicKeyJwk;
-		private String[] purposes;
+		private List<String> purposes;
 		private String id;
 		private String type;
 
@@ -63,7 +66,7 @@ public class PublicKeyModel {
 			return this;
 		}
 
-		public Builder purposes(String[] purposes) {
+		public Builder purposes(List<String> purposes) {
 			this.purposes = purposes;
 			return this;
 		}
