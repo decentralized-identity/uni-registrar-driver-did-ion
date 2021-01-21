@@ -13,6 +13,7 @@ import org.apache.logging.log4j.Logger;
 import uniregistrar.RegistrationException;
 import uniregistrar.driver.AbstractDriver;
 import uniregistrar.driver.did.ion.model.*;
+import uniregistrar.driver.did.ion.util.KeyUtils;
 import uniregistrar.driver.did.ion.util.SidetreeUtils;
 import uniregistrar.request.DeactivateRequest;
 import uniregistrar.request.RegisterRequest;
@@ -113,9 +114,9 @@ public class DidIonDriver extends AbstractDriver {
 
 		// Create required keys. TODO: Accept public keys in secret
 
-		PrivateKeyModel signingKey = PrivateKeyModel.generateNewPrivateKey(PrivateKeyModel.KeyTag.SIGNING);
-		PrivateKeyModel updateKey = PrivateKeyModel.generateNewPrivateKey(PrivateKeyModel.KeyTag.UPDATE);
-		PrivateKeyModel recoveryKey = PrivateKeyModel.generateNewPrivateKey(PrivateKeyModel.KeyTag.RECOVERY);
+		PrivateKeyModel signingKey = PrivateKeyModel.generateNewPrivateKey(KeyUtils.KeyTag.SIGNING);
+		PrivateKeyModel updateKey = PrivateKeyModel.generateNewPrivateKey(KeyUtils.KeyTag.UPDATE);
+		PrivateKeyModel recoveryKey = PrivateKeyModel.generateNewPrivateKey(KeyUtils.KeyTag.RECOVERY);
 
 		// Obtain commitments from keys
 

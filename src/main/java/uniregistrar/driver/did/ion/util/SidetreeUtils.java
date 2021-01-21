@@ -1,10 +1,8 @@
 package uniregistrar.driver.did.ion.util;
 
-import com.danubetech.keyformats.PrivateKey_to_JWK;
 import com.nimbusds.jose.jwk.JWK;
 import io.ipfs.multibase.Multibase;
 import io.ipfs.multihash.Multihash;
-import org.bitcoinj.core.ECKey;
 import org.bitcoinj.core.Sha256Hash;
 import org.erdtman.jcs.JsonCanonicalizer;
 
@@ -13,6 +11,8 @@ import java.nio.charset.StandardCharsets;
 import java.util.Base64;
 
 public class SidetreeUtils {
+
+	private SidetreeUtils() {}
 
 	public static String fromBase64UrlToBase58Btc(String data) {
 		final byte[] decoded = Base64.getUrlDecoder().decode(data);
@@ -58,10 +58,4 @@ public class SidetreeUtils {
 
 		return Base64.getUrlEncoder().withoutPadding().encodeToString(multihash.toBytes());
 	}
-
-	public static JWK generateEs256kKeyPairInJwk() {
-		ECKey key = new ECKey();
-		return PrivateKey_to_JWK.secp256k1PrivateKey_to_JWK(key, null, null);
-	}
-
 }
