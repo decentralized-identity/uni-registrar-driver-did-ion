@@ -36,23 +36,44 @@ public class KeyUtils {
 		List<PublicKeyModel> keys = new LinkedList<>();
 
 		for (VerificationMethod vm : didDocument.getVerificationMethods()) {
-			JWK jwk = null;
+			String keyFormat = "";
+
+			Map<String, Object> pk = null;
 			if (vm.getPublicKeyJwk() != null) {
-				try {
-					jwk = JWK.parse(vm.getPublicKeyJwk());
-				} catch (ParseException ignored) {
-				}
+				pk = vm.getPublicKeyJwk();
+				keyFormat = "publicKeyJwk";
+			}
+			else if (vm.getPublicKeyBase58() != null) {
+				pk = new HashMap<>();
+				pk.put("publicKeyBase58", vm.getPublicKeyBase58());
+				keyFormat = "publicKeyBase58";
+			}
+			else if (vm.getPublicKeyBase64() != null) {
+				pk = new HashMap<>();
+				pk.put("publicKeyBase64", vm.getPublicKeyBase64());
+				keyFormat = "publicKeyBase64";
+			}
+			else if (vm.getPublicKeyHex() != null) {
+				pk = new HashMap<>();
+				pk.put("publicKeyHex", vm.getPublicKeyHex());
+				keyFormat = "publicKeyHex";
+			}
+			else if (vm.getPublicKeyPem() != null) {
+				pk = new HashMap<>();
+				pk.put("publicKeyPem", vm.getPublicKeyPem());
+				keyFormat = "publicKeyPem";
 			}
 
-			// TODO: Check other key formats
+			PublicKeyModel pkm;
 
-			if (jwk != null) {
-				PublicKeyModel pkm = PublicKeyModel.builder()
-												   .id(vm.getId().toString())
-												   .type(vm.getType())
-												   .publicKeyJwk(jwk)
-												   .purposes(parsePurposes(vm.getId().toString(), didDocument))
-												   .build();
+			if (pk != null) {
+				pkm = PublicKeyModel.builder()
+									.id(vm.getId().toString())
+									.keyFormat(keyFormat)
+									.type(vm.getType())
+									.publicKey(pk)
+									.purposes(parsePurposes(vm.getId().toString(), didDocument))
+									.build();
 
 				keys.add(pkm);
 			}
@@ -140,7 +161,8 @@ public class KeyUtils {
 		}
 
 		PublicKeyModel pkm = PublicKeyModel.builder()
-										   .publicKeyJwk(pkj)
+										   .keyFormat("publicKeyJwk")
+										   .publicKey(pkj.toJSONObject())
 										   .id(keyId)
 										   .type(found.get("type") == null ? null : found.get("type").asText())
 										   .purposes(found.get("purposes") == null ? null :

@@ -8,6 +8,7 @@ import java.util.List;
 import java.util.Map;
 
 public class PrivateKeyModel {
+	public static final String DEFAULT_KEY_FORMAT = "publicKeyJwk";
 	private final KeyUtils.KeyTag keyTag;
 	private final JWK privateKey;
 	private final PublicKeyModel publicKeyModel;
@@ -21,7 +22,8 @@ public class PrivateKeyModel {
 	public static PrivateKeyModel generateNewPrivateKey(KeyUtils.KeyTag keyTag) {
 		JWK jwk = KeyUtils.generateEs256kKeyPairInJwk();
 		PublicKeyModel pkm = PublicKeyModel.builder()
-										   .publicKeyJwk(jwk.toPublicJWK())
+										   .keyFormat(DEFAULT_KEY_FORMAT)
+										   .publicKey(jwk.toPublicJWK().toJSONObject())
 										   .build();
 
 		return new PrivateKeyModel(keyTag, jwk, pkm);
@@ -30,7 +32,8 @@ public class PrivateKeyModel {
 	public static PrivateKeyModel generateNewPrivateKey(KeyUtils.KeyTag keyTag, List<String> purposes) {
 		JWK jwk = KeyUtils.generateEs256kKeyPairInJwk();
 		PublicKeyModel pkm = PublicKeyModel.builder()
-										   .publicKeyJwk(jwk.toPublicJWK())
+										   .keyFormat(DEFAULT_KEY_FORMAT)
+										   .publicKey(jwk.toPublicJWK().toJSONObject())
 										   .purposes(purposes)
 										   .build();
 
@@ -40,7 +43,8 @@ public class PrivateKeyModel {
 	public static PrivateKeyModel generateNewPrivateKey(KeyUtils.KeyTag keyTag, List<String> purposes, String type) {
 		JWK jwk = KeyUtils.generateEs256kKeyPairInJwk();
 		PublicKeyModel pkm = PublicKeyModel.builder()
-										   .publicKeyJwk(jwk.toPublicJWK())
+										   .keyFormat(DEFAULT_KEY_FORMAT)
+										   .publicKey(jwk.toPublicJWK().toJSONObject())
 										   .purposes(purposes)
 										   .type(type)
 										   .build();
@@ -51,7 +55,8 @@ public class PrivateKeyModel {
 	public static PrivateKeyModel generateNewPrivateKey(KeyUtils.KeyTag keyTag, String type) {
 		JWK jwk = KeyUtils.generateEs256kKeyPairInJwk();
 		PublicKeyModel pkm = PublicKeyModel.builder()
-										   .publicKeyJwk(jwk.toPublicJWK())
+										   .keyFormat(DEFAULT_KEY_FORMAT)
+										   .publicKey(jwk.toPublicJWK().toJSONObject())
 										   .type(type)
 										   .build();
 

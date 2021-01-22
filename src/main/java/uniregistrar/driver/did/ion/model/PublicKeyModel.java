@@ -1,25 +1,25 @@
 package uniregistrar.driver.did.ion.model;
 
-import com.nimbusds.jose.jwk.JWK;
 import com.nimbusds.jose.util.JSONObjectUtils;
 
 import java.util.*;
 
 public class PublicKeyModel {
-	private JWK publicKeyJwk;
+	private Map<String, Object> publicKey;
 	private List<String> purposes;
 	private String id;
 	private String type;
+	private String keyFormat;
 
-	public PublicKeyModel(String id, String type, JWK publicKeyJwk, List<String> purposes) {
+	public PublicKeyModel(String id, String type, String keyFormat, Map<String, Object> publicKey, List<String> purposes) {
 		this.id = id;
 		this.type = type;
-		this.publicKeyJwk = publicKeyJwk;
+		this.publicKey = publicKey;
 		this.purposes = purposes;
+		this.keyFormat = keyFormat;
 	}
 
 	public PublicKeyModel() {
-
 	}
 
 	public static Builder builder() {
@@ -30,7 +30,7 @@ public class PublicKeyModel {
 
 	public String getType() { return type; }
 
-	public JWK getPublicKeyJwk() { return publicKeyJwk; }
+	public Map<String, Object> getPublicKey() { return publicKey; }
 
 	public List<String> getPurposes() { return purposes; }
 
@@ -42,7 +42,13 @@ public class PublicKeyModel {
 		Map<String, Object> o = new LinkedHashMap<>();
 		o.put("id", id);
 		o.put("type", type);
-		o.put("publicKeyJwk", publicKeyJwk.toJSONObject());
+		if ("publicKeyJwk".equals(keyFormat)) {
+			o.put(keyFormat, publicKey);
+		}
+		else {
+			Map.Entry<String, Object> entry = publicKey.entrySet().iterator().next();
+			o.put(entry.getKey(), entry.getValue());
+		}
 		o.put("purposes", purposes);
 
 		return o;
@@ -54,15 +60,22 @@ public class PublicKeyModel {
 		public static final List<String> DEFAULT_PURPOSES = Arrays.asList("authentication", "assertionMethod", "capabilityInvocation",
 																		  "capabilityDelegation", "keyAgreement");
 
-		private JWK publicKeyJwk;
+		private Map<String, Object> publicKey;
 		private List<String> purposes;
 		private String id;
 		private String type;
 
+		private String keyFormat;
+
 		private Builder() {}
 
-		public Builder publicKeyJwk(JWK publicKeyJwk) {
-			this.publicKeyJwk = publicKeyJwk;
+		public Builder publicKey(Map<String, Object> publicKeyJwk) {
+			this.publicKey = publicKeyJwk;
+			return this;
+		}
+
+		public Builder keyFormat(String keyFormat) {
+			this.keyFormat = keyFormat;
 			return this;
 		}
 
@@ -82,10 +95,11 @@ public class PublicKeyModel {
 		}
 
 		public PublicKeyModel build() {
-			Objects.requireNonNull(publicKeyJwk);
+			Objects.requireNonNull(publicKey);
 			return new PublicKeyModel(id == null ? DEFAULT_KEY_ID : id,
 									  type == null ? DEFAULT_KEY_TYPE : type,
-									  publicKeyJwk,
+									  keyFormat,
+									  publicKey,
 									  purposes == null ? DEFAULT_PURPOSES : purposes);
 		}
 	}

@@ -157,8 +157,8 @@ public class DidIonDriver extends AbstractDriver {
 		String recoveryCommitment;
 
 		try {
-			updateCommitment = SidetreeUtils.canonicalizeThenDoubleHashThenEncode(updateKeyPublic.getPublicKeyJwk());
-			recoveryCommitment = SidetreeUtils.canonicalizeThenDoubleHashThenEncode(recoveryKeyPublic.getPublicKeyJwk());
+			updateCommitment = SidetreeUtils.canonicalizeThenDoubleHashThenEncode(updateKeyPublic.getPublicKey());
+			recoveryCommitment = SidetreeUtils.canonicalizeThenDoubleHashThenEncode(recoveryKeyPublic.getPublicKey());
 		} catch (IOException e) {
 			log.error(e.getMessage(), e);
 			throw new RegistrationException("Key error!");

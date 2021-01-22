@@ -1,6 +1,7 @@
 package uniregistrar.driver.did.ion.util;
 
 import com.nimbusds.jose.jwk.JWK;
+import com.nimbusds.jose.util.JSONObjectUtils;
 import io.ipfs.multibase.Multibase;
 import io.ipfs.multihash.Multihash;
 import org.bitcoinj.core.Sha256Hash;
@@ -9,6 +10,7 @@ import org.erdtman.jcs.JsonCanonicalizer;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.Base64;
+import java.util.Map;
 
 public class SidetreeUtils {
 
@@ -34,6 +36,15 @@ public class SidetreeUtils {
 
 	public static String canonicalizeThenDoubleHashThenEncode(String value) throws IOException {
 		JsonCanonicalizer jc = new JsonCanonicalizer(value);
+		byte[] hashed = Sha256Hash.hashTwice(jc.getEncodedString().getBytes(StandardCharsets.US_ASCII));
+		Multihash multihash = new Multihash(Multihash.Type.sha2_256, hashed);
+
+		return Base64.getUrlEncoder().withoutPadding().encodeToString(multihash.toBytes());
+	}
+
+	public static String canonicalizeThenDoubleHashThenEncode(Map<String, Object> value) throws IOException {
+
+		JsonCanonicalizer jc = new JsonCanonicalizer(JSONObjectUtils.toJSONString(value));
 		byte[] hashed = Sha256Hash.hashTwice(jc.getEncodedString().getBytes(StandardCharsets.US_ASCII));
 		Multihash multihash = new Multihash(Multihash.Type.sha2_256, hashed);
 
