@@ -14,6 +14,7 @@ import uniregistrar.RegistrationException;
 import uniregistrar.driver.AbstractDriver;
 import uniregistrar.driver.did.ion.model.*;
 import uniregistrar.driver.did.ion.util.KeyUtils;
+import uniregistrar.driver.did.ion.util.ParsingException;
 import uniregistrar.driver.did.ion.util.SidetreeUtils;
 import uniregistrar.request.DeactivateRequest;
 import uniregistrar.request.RegisterRequest;
@@ -169,7 +170,12 @@ public class DidIonDriver extends AbstractDriver {
 		List<PublicKeyModel> publicKeyModels = new LinkedList<>();
 		publicKeyModels.add(signingKeyPublic);
 
-		List<PublicKeyModel> fromDidDoc = KeyUtils.extractPublicKeyModels(request.getDidDocument());
+		List<PublicKeyModel> fromDidDoc;
+		try {
+			fromDidDoc = KeyUtils.extractPublicKeyModels(request.getDidDocument());
+		} catch (ParsingException e) {
+			throw new RegistrationException("Keys from given DIDDocument is not parsable");
+		}
 		if (fromDidDoc != null) {
 			publicKeyModels.addAll(fromDidDoc);
 		}

@@ -13,24 +13,20 @@ import org.bitcoinj.core.ECKey;
 import uniregistrar.driver.did.ion.model.PublicKeyModel;
 
 import java.text.ParseException;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
+import java.util.*;
 
 public class KeyUtils {
 
+	public static final List<String> KEY_PURPOSES = Arrays.asList("authentication", "assertionMethod", "capabilityInvocation",
+																  "capabilityDelegation", "keyAgreement");
 	private static final ObjectMapper mapper = new ObjectMapper();
-
-	private KeyUtils() {
-	}
 
 	public static JWK generateEs256kKeyPairInJwk() {
 		ECKey key = new ECKey();
 		return PrivateKey_to_JWK.secp256k1PrivateKey_to_JWK(key, null, null);
 	}
 
-	public static List<PublicKeyModel> extractPublicKeyModels(DIDDocument didDocument) {
+	public static List<PublicKeyModel> extractPublicKeyModels(DIDDocument didDocument) throws ParsingException {
 		Preconditions.checkNotNull(didDocument);
 
 		if (didDocument.getVerificationMethods() == null) {
@@ -50,14 +46,12 @@ public class KeyUtils {
 
 			// TODO: Check other key formats
 
-
-			int counter = 0;
-
 			if (jwk != null) {
 				PublicKeyModel pkm = PublicKeyModel.builder()
-												   .id(vm.getId() == null ? "custom" + counter : vm.getId().toString())
+												   .id(vm.getId().toString())
 												   .type(vm.getType())
 												   .publicKeyJwk(jwk)
+												   .purposes(parsePurposes(vm.getId().toString(), didDocument))
 												   .build();
 
 				keys.add(pkm);
@@ -65,6 +59,52 @@ public class KeyUtils {
 		}
 
 		return keys;
+	}
+
+	public static List<String> parsePurposes(String keyId, DIDDocument document) throws ParsingException {
+		Preconditions.checkNotNull(document);
+
+		JsonNode jsonNode = mapper.convertValue(document.getJsonObject(), JsonNode.class);
+		List<String> purposes = new ArrayList<>();
+
+		for (String p : KEY_PURPOSES) {
+			JsonNode n = jsonNode.get(p);
+
+			if (n == null) continue;
+
+			Iterator<JsonNode> nodeIterator = n.elements();
+			while (nodeIterator.hasNext()) {
+				JsonNode keyNode = nodeIterator.next();
+
+				if (keyNode.size() > 1) {
+					JsonNode vm = keyNode.get("verificationMethod");
+					if (vm != null && keyId.equals(vm.asText().substring(1))) {
+						purposes.add(p);
+					}
+				}
+				else {
+					String vm = keyNode.asText();
+					String kid;
+					if (vm.startsWith("#")) {
+						kid = vm.substring(1);
+					}
+					else {
+						String[] parseKeyId = vm.split("#");
+						if (parseKeyId.length != 2) {
+							throw new ParsingException();
+						}
+						kid = parseKeyId[1];
+					}
+					if (keyId.equals(kid)) {
+						purposes.add(p);
+					}
+				}
+			}
+
+		}
+
+		return purposes;
+
 	}
 
 	public static Optional<PublicKeyModel> extractPublicKeyModel(KeyTag keyTag, Map<String, Object> secret) {
