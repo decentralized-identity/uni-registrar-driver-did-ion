@@ -36,8 +36,10 @@
 		<maven.compiler.target>11</maven.compiler.target>
 		<junit-jupiter.version>5.7.0</junit-jupiter.version>
 		<java-multihash.version>v1.3.0</java-multihash.version>
-
-		<!--		TODO: Move other dep. versions here-->
+		<bitcoinj.version>0.15.8</bitcoinj.version>
+		<java-json-canonicalization.version>1.1</java-json-canonicalization.version>
+		<key-formats-java.version>0.3-SNAPSHOT</key-formats-java.version>
+		<jsonld-common-java.version>0.2-SNAPSHOT</jsonld-common-java.version>
 	</properties>
 
 	<profiles>
@@ -96,11 +98,6 @@
 
 	<dependencies>
 		<dependency>
-			<groupId>org.slf4j</groupId>
-			<artifactId>jcl-over-slf4j</artifactId>
-			<scope>test</scope>
-		</dependency>
-		<dependency>
 			<groupId>org.apache.logging.log4j</groupId>
 			<artifactId>log4j-slf4j-impl</artifactId>
 			<scope>test</scope>
@@ -108,38 +105,36 @@
 		<dependency>
 			<groupId>decentralized-identity</groupId>
 			<artifactId>uni-registrar-driver</artifactId>
-		</dependency>
-		<dependency>
-			<groupId>info.weboftrust</groupId>
-			<artifactId>ld-signatures-java</artifactId>
-			<version>0.4-SNAPSHOT</version>
 			<scope>compile</scope>
 		</dependency>
 		<dependency>
-			<groupId>io.github.erdtman</groupId>
-			<artifactId>java-json-canonicalization</artifactId>
-			<version>1.1</version>
+			<groupId>decentralized-identity</groupId>
+			<artifactId>jsonld-common-java</artifactId>
+			<version>${jsonld-common-java.version}</version>
+			<scope>compile</scope>
 		</dependency>
 		<dependency>
-			<groupId>org.bitcoinj</groupId>
-			<artifactId>bitcoinj-core</artifactId>
-			<version>0.15.9</version>
-		</dependency>
-		<dependency>
-			<groupId>io.leonard</groupId>
-			<artifactId>base58</artifactId>
+			<groupId>decentralized-identity</groupId>
+			<artifactId>did-common-java</artifactId>
 			<scope>compile</scope>
 		</dependency>
 		<dependency>
 			<groupId>com.danubetech</groupId>
 			<artifactId>key-formats-java</artifactId>
-			<version>0.3-SNAPSHOT</version>
+			<version>${key-formats-java.version}</version>
 			<scope>compile</scope>
 		</dependency>
 		<dependency>
-			<groupId>org.apache.logging.log4j</groupId>
-			<artifactId>log4j-api</artifactId>
+			<groupId>io.github.erdtman</groupId>
+			<artifactId>java-json-canonicalization</artifactId>
 			<scope>compile</scope>
+			<version>${java-json-canonicalization.version}</version>
+		</dependency>
+		<dependency>
+			<groupId>org.bitcoinj</groupId>
+			<artifactId>bitcoinj-core</artifactId>
+			<scope>compile</scope>
+			<version>${bitcoinj.version}</version>
 		</dependency>
 		<dependency>
 			<groupId>org.junit.jupiter</groupId>
@@ -151,30 +146,21 @@
 			<groupId>com.github.multiformats</groupId>
 			<artifactId>java-multihash</artifactId>
 			<version>${java-multihash.version}</version>
-		</dependency>
-		<dependency>
-			<groupId>com.github.multiformats</groupId>
-			<artifactId>java-multibase</artifactId>
-			<version>v1.0.0</version>
+			<scope>compile</scope>
 		</dependency>
 		<dependency>
 			<groupId>com.google.guava</groupId>
 			<artifactId>guava</artifactId>
-			<version>30.1-jre</version>
+			<scope>compile</scope>
+		</dependency>
+		<dependency>
+			<groupId>org.apache.logging.log4j</groupId>
+			<artifactId>log4j-api</artifactId>
+			<scope>compile</scope>
 		</dependency>
 		<dependency>
 			<groupId>org.apache.logging.log4j</groupId>
 			<artifactId>log4j-core</artifactId>
-		</dependency>
-		<dependency>
-			<groupId>decentralized-identity</groupId>
-			<artifactId>did-common-java</artifactId>
-			<version>0.3-SNAPSHOT</version>
-		</dependency>
-		<dependency>
-			<groupId>decentralized-identity</groupId>
-			<artifactId>jsonld-common-java</artifactId>
-			<version>0.2-SNAPSHOT</version>
 			<scope>compile</scope>
 		</dependency>
 	</dependencies>
