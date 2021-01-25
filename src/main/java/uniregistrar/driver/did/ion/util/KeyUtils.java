@@ -1,6 +1,7 @@
 package uniregistrar.driver.did.ion.util;
 
 import com.danubetech.keyformats.PrivateKey_to_JWK;
+import com.danubetech.keyformats.PublicKey_to_JWK;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -9,11 +10,14 @@ import com.google.common.base.Strings;
 import com.nimbusds.jose.jwk.JWK;
 import foundation.identity.did.DIDDocument;
 import foundation.identity.did.VerificationMethod;
+import org.bitcoinj.core.Base58;
 import org.bitcoinj.core.ECKey;
 import uniregistrar.driver.did.ion.model.PublicKeyModel;
 
 import java.text.ParseException;
 import java.util.*;
+
+import static org.bitcoinj.core.Utils.HEX;
 
 public class KeyUtils {
 
@@ -36,32 +40,29 @@ public class KeyUtils {
 		List<PublicKeyModel> keys = new LinkedList<>();
 
 		for (VerificationMethod vm : didDocument.getVerificationMethods()) {
-			String keyFormat = "";
-
 			Map<String, Object> pk = null;
 			if (vm.getPublicKeyJwk() != null) {
 				pk = vm.getPublicKeyJwk();
-				keyFormat = "publicKeyJwk";
 			}
 			else if (vm.getPublicKeyBase58() != null) {
-				pk = new HashMap<>();
-				pk.put("publicKeyBase58", vm.getPublicKeyBase58());
-				keyFormat = "publicKeyBase58";
+				pk = PublicKey_to_JWK.secp256k1PublicKeyBytes_to_JWK(Base58.decode(vm.getPublicKeyBase58()), null, null)
+									 .toPublicJWK()
+									 .toJSONObject();
 			}
 			else if (vm.getPublicKeyBase64() != null) {
-				pk = new HashMap<>();
-				pk.put("publicKeyBase64", vm.getPublicKeyBase64());
-				keyFormat = "publicKeyBase64";
+				pk = PublicKey_to_JWK.secp256k1PublicKeyBytes_to_JWK(Base64.getDecoder().decode(vm.getPublicKeyBase64()), null, null)
+									 .toPublicJWK()
+									 .toJSONObject();
 			}
 			else if (vm.getPublicKeyHex() != null) {
-				pk = new HashMap<>();
-				pk.put("publicKeyHex", vm.getPublicKeyHex());
-				keyFormat = "publicKeyHex";
+				pk = PublicKey_to_JWK.secp256k1PublicKeyBytes_to_JWK(HEX.decode(vm.getPublicKeyHex()), null, null)
+									 .toPublicJWK()
+									 .toJSONObject();
 			}
 			else if (vm.getPublicKeyPem() != null) {
-				pk = new HashMap<>();
-				pk.put("publicKeyPem", vm.getPublicKeyPem());
-				keyFormat = "publicKeyPem";
+				pk = PublicKey_to_JWK.secp256k1PublicKeyBytes_to_JWK(Base64.getDecoder().decode(vm.getPublicKeyPem()), null, null)
+									 .toPublicJWK()
+									 .toJSONObject();
 			}
 
 			PublicKeyModel pkm;
@@ -69,7 +70,7 @@ public class KeyUtils {
 			if (pk != null) {
 				pkm = PublicKeyModel.builder()
 									.id(vm.getId().toString())
-									.keyFormat(keyFormat)
+									.keyFormat("publicKeyJwk")
 									.type(vm.getType())
 									.publicKey(pk)
 									.purposes(parsePurposes(vm.getId().toString(), didDocument))
