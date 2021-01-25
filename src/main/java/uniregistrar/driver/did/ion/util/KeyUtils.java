@@ -23,7 +23,11 @@ public class KeyUtils {
 
 	public static final List<String> KEY_PURPOSES = Arrays.asList("authentication", "assertionMethod", "capabilityInvocation",
 																  "capabilityDelegation", "keyAgreement");
+	public static final String EcdsaSecp256k1_TERM = "EcdsaSecp256k1VerificationKey2019";
+	public static final String Ed25519_TERM = "Ed25519VerificationKey2018";
 	private static final ObjectMapper mapper = new ObjectMapper();
+
+	{}
 
 	public static JWK generateEs256kKeyPairInJwk() {
 		ECKey key = new ECKey();
@@ -37,35 +41,12 @@ public class KeyUtils {
 			return null;
 		}
 
+
 		List<PublicKeyModel> keys = new LinkedList<>();
+		PublicKeyModel pkm;
 
 		for (VerificationMethod vm : didDocument.getVerificationMethods()) {
-			Map<String, Object> pk = null;
-			if (vm.getPublicKeyJwk() != null) {
-				pk = vm.getPublicKeyJwk();
-			}
-			else if (vm.getPublicKeyBase58() != null) {
-				pk = PublicKey_to_JWK.secp256k1PublicKeyBytes_to_JWK(Base58.decode(vm.getPublicKeyBase58()), null, null)
-									 .toPublicJWK()
-									 .toJSONObject();
-			}
-			else if (vm.getPublicKeyBase64() != null) {
-				pk = PublicKey_to_JWK.secp256k1PublicKeyBytes_to_JWK(Base64.getDecoder().decode(vm.getPublicKeyBase64()), null, null)
-									 .toPublicJWK()
-									 .toJSONObject();
-			}
-			else if (vm.getPublicKeyHex() != null) {
-				pk = PublicKey_to_JWK.secp256k1PublicKeyBytes_to_JWK(HEX.decode(vm.getPublicKeyHex()), null, null)
-									 .toPublicJWK()
-									 .toJSONObject();
-			}
-			else if (vm.getPublicKeyPem() != null) {
-				pk = PublicKey_to_JWK.secp256k1PublicKeyBytes_to_JWK(Base64.getDecoder().decode(vm.getPublicKeyPem()), null, null)
-									 .toPublicJWK()
-									 .toJSONObject();
-			}
-
-			PublicKeyModel pkm;
+			Map<String, Object> pk = convertToJWK(vm);
 
 			if (pk != null) {
 				pkm = PublicKeyModel.builder()
@@ -75,12 +56,73 @@ public class KeyUtils {
 									.publicKey(pk)
 									.purposes(parsePurposes(vm.getId().toString(), didDocument))
 									.build();
-
 				keys.add(pkm);
 			}
 		}
 
 		return keys;
+	}
+
+	public static Map<String, Object> convertToJWK(VerificationMethod vm) throws ParsingException {
+		var keyType = vm.getType();
+		if (!EcdsaSecp256k1_TERM.equals(keyType) && !Ed25519_TERM.equals(keyType)) {
+			throw new ParsingException("Unsupported key type: " + keyType);
+		}
+
+		if (vm.getPublicKeyJwk() != null) {
+			return vm.getPublicKeyJwk();
+		}
+		else if (vm.getPublicKeyBase58() != null) {
+			if (EcdsaSecp256k1_TERM.equals(vm.getType())) {
+				return PublicKey_to_JWK.secp256k1PublicKeyBytes_to_JWK(Base58.decode(vm.getPublicKeyBase58()), null, null)
+									   .toPublicJWK()
+									   .toJSONObject();
+			}
+			else {
+				return PublicKey_to_JWK.Ed25519PublicKeyBytes_to_JWK(Base58.decode(vm.getPublicKeyBase58()), null, null)
+									   .toPublicJWK()
+									   .toJSONObject();
+			}
+		}
+		else if (vm.getPublicKeyBase64() != null) {
+			if (EcdsaSecp256k1_TERM.equals(vm.getType())) {
+				return PublicKey_to_JWK.secp256k1PublicKeyBytes_to_JWK(Base64.getDecoder().decode(vm.getPublicKeyBase64()), null, null)
+									   .toPublicJWK()
+									   .toJSONObject();
+			}
+			else {
+				return PublicKey_to_JWK.Ed25519PublicKeyBytes_to_JWK(Base64.getDecoder().decode(vm.getPublicKeyBase64()), null, null)
+									   .toPublicJWK()
+									   .toJSONObject();
+			}
+		}
+
+		else if (vm.getPublicKeyHex() != null) {
+			if (EcdsaSecp256k1_TERM.equals(vm.getType())) {
+				return PublicKey_to_JWK.secp256k1PublicKeyBytes_to_JWK(HEX.decode(vm.getPublicKeyHex()), null, null)
+									   .toPublicJWK()
+									   .toJSONObject();
+			}
+			else {
+				return PublicKey_to_JWK.Ed25519PublicKeyBytes_to_JWK(HEX.decode(vm.getPublicKeyHex()), null, null)
+									   .toPublicJWK()
+									   .toJSONObject();
+			}
+		}
+		else if (vm.getPublicKeyPem() != null) {
+			if (EcdsaSecp256k1_TERM.equals(vm.getType())) {
+				return PublicKey_to_JWK.secp256k1PublicKeyBytes_to_JWK(Base64.getDecoder().decode(vm.getPublicKeyPem()), null, null)
+									   .toPublicJWK()
+									   .toJSONObject();
+			}
+			else {
+				return PublicKey_to_JWK.Ed25519PublicKeyBytes_to_JWK(Base64.getDecoder().decode(vm.getPublicKeyPem()), null, null)
+									   .toPublicJWK()
+									   .toJSONObject();
+			}
+		}
+		else
+			return null;
 	}
 
 	public static List<String> parsePurposes(String keyId, DIDDocument document) throws ParsingException {

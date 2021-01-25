@@ -174,7 +174,7 @@ public class DidIonDriver extends AbstractDriver {
 		try {
 			fromDidDoc = KeyUtils.extractPublicKeyModels(request.getDidDocument());
 		} catch (ParsingException e) {
-			throw new RegistrationException("Keys from given DIDDocument is not parsable");
+			throw new RegistrationException(e.getMessage());
 		}
 		if (fromDidDoc != null) {
 			publicKeyModels.addAll(fromDidDoc);
