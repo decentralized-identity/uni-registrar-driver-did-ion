@@ -18,8 +18,8 @@ docker run -p 9080:9080 universalregistrar/driver-did-ion
 
 ## Driver Environment Variables
 
-... TODO ...
 
-## Driver Metadata
+```
+uniregistrar_driver_did_sidetreeApi=<API Endpoint of a Sidetree Node>
+```
 
-... TODO ...
