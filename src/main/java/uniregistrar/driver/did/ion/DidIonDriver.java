@@ -33,6 +33,8 @@ import java.net.MalformedURLException;
 import java.net.ProtocolException;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
+import java.security.NoSuchAlgorithmException;
+import java.security.spec.InvalidKeySpecException;
 import java.util.*;
 
 public class DidIonDriver extends AbstractDriver {
@@ -173,7 +175,7 @@ public class DidIonDriver extends AbstractDriver {
 		List<PublicKeyModel> fromDidDoc;
 		try {
 			fromDidDoc = KeyUtils.extractPublicKeyModels(request.getDidDocument());
-		} catch (ParsingException e) {
+		} catch (ParsingException | InvalidKeySpecException | NoSuchAlgorithmException e) {
 			throw new RegistrationException(e.getMessage());
 		}
 		if (fromDidDoc != null) {

@@ -10,10 +10,16 @@ import com.google.common.base.Strings;
 import com.nimbusds.jose.jwk.JWK;
 import foundation.identity.did.DIDDocument;
 import foundation.identity.did.VerificationMethod;
+import org.apache.commons.codec.binary.Base64;
 import org.bitcoinj.core.Base58;
 import org.bitcoinj.core.ECKey;
 import uniregistrar.driver.did.ion.model.PublicKeyModel;
 
+import java.security.KeyFactory;
+import java.security.NoSuchAlgorithmException;
+import java.security.interfaces.RSAPublicKey;
+import java.security.spec.InvalidKeySpecException;
+import java.security.spec.X509EncodedKeySpec;
 import java.text.ParseException;
 import java.util.*;
 
@@ -23,10 +29,9 @@ public class KeyUtils {
 
 	public static final List<String> KEY_PURPOSES = Arrays.asList("authentication", "assertionMethod", "capabilityInvocation",
 																  "capabilityDelegation", "keyAgreement");
-	public static final String EcdsaSecp256k1_TERM = "EcdsaSecp256k1VerificationKey2019";
-	public static final String Ed25519_TERM = "Ed25519VerificationKey2018";
-
-	public static final String[] SUPPORTED_KEY_TYPES = {"RsaSignature2018", "Ed25519VerificationKey2018", "EcdsaSecp256k1VerificationKey2019"};
+	public static final String EcdsaSecp256k1_VER = "EcdsaSecp256k1VerificationKey2019";
+	public static final String Ed25519_VER = "Ed25519VerificationKey2018";
+	public static final String RSA_SIG = "RsaSignature2018";
 	private static final ObjectMapper mapper = new ObjectMapper();
 
 	public static JWK generateEs256kKeyPairInJwk() {
@@ -35,13 +40,13 @@ public class KeyUtils {
 	}
 
 
-	public static List<PublicKeyModel> extractPublicKeyModels(DIDDocument didDocument) throws ParsingException {
+	public static List<PublicKeyModel> extractPublicKeyModels(DIDDocument didDocument) throws ParsingException, InvalidKeySpecException,
+			NoSuchAlgorithmException {
 		Preconditions.checkNotNull(didDocument);
 
 		if (didDocument.getVerificationMethods() == null) {
 			return null;
 		}
-
 
 		List<PublicKeyModel> keys = new LinkedList<>();
 		PublicKeyModel pkm;
@@ -64,9 +69,9 @@ public class KeyUtils {
 		return keys;
 	}
 
-	public static Map<String, Object> convertToJWK(VerificationMethod vm) throws ParsingException {
+	public static Map<String, Object> convertToJWK(VerificationMethod vm) throws ParsingException, InvalidKeySpecException, NoSuchAlgorithmException {
 		var keyType = vm.getType();
-		if (!EcdsaSecp256k1_TERM.equals(keyType) && !Ed25519_TERM.equals(keyType)) {
+		if (!EcdsaSecp256k1_VER.equals(keyType) && !Ed25519_VER.equals(keyType)) {
 			throw new ParsingException("Unsupported key type: " + keyType);
 		}
 
@@ -74,58 +79,19 @@ public class KeyUtils {
 			return vm.getPublicKeyJwk();
 		}
 		else if (vm.getPublicKeyBase58() != null) {
-			if (EcdsaSecp256k1_TERM.equals(vm.getType())) {
-				return PublicKey_to_JWK.secp256k1PublicKeyBytes_to_JWK(Base58.decode(vm.getPublicKeyBase58()), null, null)
-									   .toPublicJWK()
-									   .toJSONObject();
-			}
-			else {
-				return PublicKey_to_JWK.Ed25519PublicKeyBytes_to_JWK(Base58.decode(vm.getPublicKeyBase58()), null, null)
-									   .toPublicJWK()
-									   .toJSONObject();
-			}
+			return convertFromPubKeyBytesToJwk(vm.getType(), Base58.decode(vm.getPublicKeyBase58()));
 		}
 		else if (vm.getPublicKeyBase64() != null) {
-			if (EcdsaSecp256k1_TERM.equals(vm.getType())) {
-				return PublicKey_to_JWK.secp256k1PublicKeyBytes_to_JWK(Base64.getDecoder().decode(vm.getPublicKeyBase64()), null, null)
-									   .toPublicJWK()
-									   .toJSONObject();
-			}
-			else {
-				return PublicKey_to_JWK.Ed25519PublicKeyBytes_to_JWK(Base64.getDecoder().decode(vm.getPublicKeyBase64()), null, null)
-									   .toPublicJWK()
-									   .toJSONObject();
-			}
+			return convertFromPubKeyBytesToJwk(vm.getType(), Base64.decodeBase64(vm.getPublicKeyBase64()));
 		}
-
 		else if (vm.getPublicKeyHex() != null) {
-			if (EcdsaSecp256k1_TERM.equals(vm.getType())) {
-				return PublicKey_to_JWK.secp256k1PublicKeyBytes_to_JWK(HEX.decode(vm.getPublicKeyHex()), null, null)
-									   .toPublicJWK()
-									   .toJSONObject();
-			}
-			else {
-				return PublicKey_to_JWK.Ed25519PublicKeyBytes_to_JWK(HEX.decode(vm.getPublicKeyHex()), null, null)
-									   .toPublicJWK()
-									   .toJSONObject();
-			}
+			return convertFromPubKeyBytesToJwk(vm.getType(), HEX.decode(vm.getPublicKeyHex()));
 		}
 		else if (vm.getPublicKeyPem() != null) {
-
 			String key = vm.getPublicKeyPem();
 			key = key.replace("-----BEGIN PUBLIC KEY-----\n", "");
 			key = key.replace("-----END PUBLIC KEY-----", "");
-
-			if (EcdsaSecp256k1_TERM.equals(vm.getType())) {
-				return PublicKey_to_JWK.secp256k1PublicKeyBytes_to_JWK(Base64.getDecoder().decode(key), null, null)
-									   .toPublicJWK()
-									   .toJSONObject();
-			}
-			else {
-				return PublicKey_to_JWK.Ed25519PublicKeyBytes_to_JWK(Base64.getDecoder().decode(key), null, null)
-									   .toPublicJWK()
-									   .toJSONObject();
-			}
+			return convertFromPubKeyBytesToJwk(vm.getType(), Base64.decodeBase64(key));
 		}
 		else
 			return null;
@@ -177,12 +143,16 @@ public class KeyUtils {
 
 	}
 
-	public static Map<String, Object> convertFromPubKeyBytesToJwk(String keyType, byte[] key) {
+	public static Map<String, Object> convertFromPubKeyBytesToJwk(String keyType, byte[] key) throws NoSuchAlgorithmException,
+			InvalidKeySpecException {
 		switch (keyType) {
-			case EcdsaSecp256k1_TERM:
-				return PublicKey_to_JWK.secp256k1PublicKeyBytes_to_JWK(key, null, null).toPublicJWK().toJSONObject();
-			case Ed25519_TERM:
-				return PublicKey_to_JWK.Ed25519PublicKeyBytes_to_JWK(key, null, null).toPublicJWK().toJSONObject();
+			case EcdsaSecp256k1_VER:
+				return PublicKey_to_JWK.secp256k1PublicKeyBytes_to_JWK(key, null, null).toJSONObject();
+			case Ed25519_VER:
+				return PublicKey_to_JWK.Ed25519PublicKeyBytes_to_JWK(key, null, null).toJSONObject();
+			case RSA_SIG:
+				KeyFactory kf = KeyFactory.getInstance("RSA");
+				return PublicKey_to_JWK.RSAPublicKey_to_JWK((RSAPublicKey) kf.generatePublic(new X509EncodedKeySpec(key)), null, null).toJSONObject();
 			default:
 				throw new IllegalArgumentException("Key Type (" + keyType + ") is not supported!");
 		}
