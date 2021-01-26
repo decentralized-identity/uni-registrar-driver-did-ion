@@ -25,14 +25,15 @@ public class KeyUtils {
 																  "capabilityDelegation", "keyAgreement");
 	public static final String EcdsaSecp256k1_TERM = "EcdsaSecp256k1VerificationKey2019";
 	public static final String Ed25519_TERM = "Ed25519VerificationKey2018";
-	private static final ObjectMapper mapper = new ObjectMapper();
 
-	{}
+	public static final String[] SUPPORTED_KEY_TYPES = {"RsaSignature2018", "Ed25519VerificationKey2018", "EcdsaSecp256k1VerificationKey2019"};
+	private static final ObjectMapper mapper = new ObjectMapper();
 
 	public static JWK generateEs256kKeyPairInJwk() {
 		ECKey key = new ECKey();
 		return PrivateKey_to_JWK.secp256k1PrivateKey_to_JWK(key, null, null);
 	}
+
 
 	public static List<PublicKeyModel> extractPublicKeyModels(DIDDocument didDocument) throws ParsingException {
 		Preconditions.checkNotNull(didDocument);
@@ -110,13 +111,18 @@ public class KeyUtils {
 			}
 		}
 		else if (vm.getPublicKeyPem() != null) {
+
+			String key = vm.getPublicKeyPem();
+			key = key.replace("-----BEGIN PUBLIC KEY-----\n", "");
+			key = key.replace("-----END PUBLIC KEY-----", "");
+
 			if (EcdsaSecp256k1_TERM.equals(vm.getType())) {
-				return PublicKey_to_JWK.secp256k1PublicKeyBytes_to_JWK(Base64.getDecoder().decode(vm.getPublicKeyPem()), null, null)
+				return PublicKey_to_JWK.secp256k1PublicKeyBytes_to_JWK(Base64.getDecoder().decode(key), null, null)
 									   .toPublicJWK()
 									   .toJSONObject();
 			}
 			else {
-				return PublicKey_to_JWK.Ed25519PublicKeyBytes_to_JWK(Base64.getDecoder().decode(vm.getPublicKeyPem()), null, null)
+				return PublicKey_to_JWK.Ed25519PublicKeyBytes_to_JWK(Base64.getDecoder().decode(key), null, null)
 									   .toPublicJWK()
 									   .toJSONObject();
 			}
@@ -169,6 +175,17 @@ public class KeyUtils {
 
 		return purposes;
 
+	}
+
+	public static Map<String, Object> convertFromPubKeyBytesToJwk(String keyType, byte[] key) {
+		switch (keyType) {
+			case EcdsaSecp256k1_TERM:
+				return PublicKey_to_JWK.secp256k1PublicKeyBytes_to_JWK(key, null, null).toPublicJWK().toJSONObject();
+			case Ed25519_TERM:
+				return PublicKey_to_JWK.Ed25519PublicKeyBytes_to_JWK(key, null, null).toPublicJWK().toJSONObject();
+			default:
+				throw new IllegalArgumentException("Key Type (" + keyType + ") is not supported!");
+		}
 	}
 
 	public static Optional<PublicKeyModel> extractPublicKeyModel(KeyTag keyTag, Map<String, Object> secret) {
