@@ -27,8 +27,8 @@ import static org.bitcoinj.core.Utils.HEX;
 
 public class KeyUtils {
 
-	public static final String BEGIN_CERT = "-----BEGIN CERTIFICATE-----";
-	public static final String END_CERT = "-----END CERTIFICATE-----";
+	public static final String BEGIN_CERT = "-----BEGIN PUBLIC KEY-----";
+	public static final String END_CERT = "-----END PUBLIC KEY-----";
 	public final static String LINE_SEPARATOR = System.getProperty("line.separator");
 
 	public static final List<String> KEY_PURPOSES = Arrays.asList("authentication", "assertionMethod", "capabilityInvocation",
