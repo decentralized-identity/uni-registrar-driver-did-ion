@@ -35,7 +35,7 @@ public class KeyUtils {
 																  "capabilityDelegation", "keyAgreement");
 	public static final String EcdsaSecp256k1_VER = "EcdsaSecp256k1VerificationKey2019";
 	public static final String Ed25519_VER = "Ed25519VerificationKey2018";
-	public static final String RSA_SIG = "RsaSignature2018";
+	public static final String RSA_SIG = "RsaVerificationKey2018";
 	private static final ObjectMapper mapper = new ObjectMapper();
 
 	public static JWK generateEs256kKeyPairInJwk() {
