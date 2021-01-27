@@ -27,6 +27,10 @@ import static org.bitcoinj.core.Utils.HEX;
 
 public class KeyUtils {
 
+	public static final String BEGIN_CERT = "-----BEGIN CERTIFICATE-----";
+	public static final String END_CERT = "-----END CERTIFICATE-----";
+	public final static String LINE_SEPARATOR = System.getProperty("line.separator");
+
 	public static final List<String> KEY_PURPOSES = Arrays.asList("authentication", "assertionMethod", "capabilityInvocation",
 																  "capabilityDelegation", "keyAgreement");
 	public static final String EcdsaSecp256k1_VER = "EcdsaSecp256k1VerificationKey2019";
@@ -71,9 +75,6 @@ public class KeyUtils {
 
 	public static Map<String, Object> convertToJWK(VerificationMethod vm) throws ParsingException, InvalidKeySpecException, NoSuchAlgorithmException {
 		var keyType = vm.getType();
-		if (!EcdsaSecp256k1_VER.equals(keyType) && !Ed25519_VER.equals(keyType)) {
-			throw new ParsingException("Unsupported key type: " + keyType);
-		}
 
 		if (vm.getPublicKeyJwk() != null) {
 			return vm.getPublicKeyJwk();
@@ -90,6 +91,7 @@ public class KeyUtils {
 		else if (vm.getPublicKeyPem() != null) {
 			String key = vm.getPublicKeyPem();
 			key = key.replace("-----BEGIN PUBLIC KEY-----\n", "");
+			key = key.replaceAll(System.lineSeparator(), "");
 			key = key.replace("-----END PUBLIC KEY-----", "");
 			return convertFromPubKeyBytesToJwk(vm.getType(), Base64.decodeBase64(key));
 		}
