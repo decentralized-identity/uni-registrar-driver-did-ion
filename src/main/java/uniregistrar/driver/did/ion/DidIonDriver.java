@@ -248,9 +248,10 @@ public class DidIonDriver extends AbstractDriver {
 		// Extract Method Metadata
 
 		RegisterState state = RegisterState.build();
-		Map<String, Object> methodMetadata = mapper.convertValue(jsonNode.get("methodMetadata"), new TypeReference<Map<String, Object>>() {});
-		state.setMethodMetadata(methodMetadata);
-		jsonNode.remove("methodMetadata"); // Remove to prevent duplication
+		Map<String, Object> didDocumentMetadata = mapper.convertValue(jsonNode.get("didDocumentMetadata"),
+																	  new TypeReference<Map<String, Object>>() {});
+		state.setMethodMetadata(didDocumentMetadata);
+		jsonNode.remove("didDocumentMetadata"); // Remove to prevent duplication
 
 		// Put secrets
 
