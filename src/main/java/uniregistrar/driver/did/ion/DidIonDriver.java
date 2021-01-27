@@ -24,10 +24,7 @@ import uniregistrar.state.RegisterState;
 import uniregistrar.state.SetRegisterStateFinished;
 import uniregistrar.state.UpdateState;
 
-import java.io.BufferedReader;
-import java.io.IOException;
-import java.io.InputStreamReader;
-import java.io.OutputStream;
+import java.io.*;
 import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.ProtocolException;
@@ -215,34 +212,34 @@ public class DidIonDriver extends AbstractDriver {
 			status = con.getResponseCode();
 		} catch (IOException e) {
 			log.error(e.getMessage(), e);
-			throw new RegistrationException("Sidetree node issue!");
-		}
-
-		if (status != 200) {
-			throw new RegistrationException("Sidetree API issue. Got response code (" + status + ")");
-		}
-
-
-		// Read the response
-
-		StringBuilder response;
-		try (BufferedReader br = new BufferedReader(
-				new InputStreamReader(con.getInputStream(), StandardCharsets.UTF_8))) {
-			response = new StringBuilder();
-			String responseLine;
-			while ((responseLine = br.readLine()) != null) {
-				response.append(responseLine.trim());
-			}
-		} catch (IOException e) {
-			log.error(e.getMessage(), e);
 			throw new RegistrationException("Sidetree node error!");
 		}
+
+		String response;
+		if (status != 200) {
+			// Get error message
+			try {
+				response = readResponse(con.getErrorStream());
+			} catch (IOException e) {
+				throw new RegistrationException("Internal error!");
+			}
+			throw new RegistrationException("Sidetree Error:\n" + response);
+		}
+		else {
+			// Read the response
+			try {
+				response = readResponse(con.getInputStream());
+			} catch (IOException e) {
+				throw new RegistrationException("Internal error!");
+			}
+		}
+
 
 		con.disconnect();
 
 		ObjectNode jsonNode;
 		try {
-			jsonNode = (ObjectNode) mapper.readTree(response.toString());
+			jsonNode = (ObjectNode) mapper.readTree(response);
 		} catch (JsonProcessingException e) {
 			log.error(e.getMessage(), e);
 			throw new RegistrationException("Response is not parseable");
@@ -289,6 +286,24 @@ public class DidIonDriver extends AbstractDriver {
 	@Override
 	public Map<String, Object> properties() throws RegistrationException {
 		throw new RuntimeException("Not implemented.");
+	}
+
+	private static String readResponse(InputStream is) throws IOException {
+
+		StringBuilder response;
+		try (BufferedReader br = new BufferedReader(
+				new InputStreamReader(is, StandardCharsets.UTF_8))) {
+			response = new StringBuilder();
+			String responseLine;
+			while ((responseLine = br.readLine()) != null) {
+				response.append(responseLine.trim());
+			}
+		} catch (IOException e) {
+			log.error(e.getMessage(), e);
+			throw new IOException(e);
+		}
+
+		return response.toString();
 	}
 
 	public final void setProperties(Map<String, Object> properties) {
