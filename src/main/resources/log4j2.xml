@@ -8,9 +8,12 @@
 	</Appenders>
 
 	<Loggers>
+		<Logger name="uniregistrar.driver.did.ion" level="info" additivity="false">
+			<AppenderRef ref="Console"/>
+		</Logger>
+
 		<Root level="info">
 			<AppenderRef ref="Console"/>
 		</Root>
-		<Logger name="uniregistrar.driver.did.ion" level="info"/>
 	</Loggers>
 </Configuration>
