@@ -286,7 +286,7 @@ public class DidIonDriver extends AbstractDriver {
 
 	@Override
 	public Map<String, Object> properties() throws RegistrationException {
-		throw new RuntimeException("Not implemented.");
+		return properties;
 	}
 
 	private static String readResponse(InputStream is) throws IOException {
