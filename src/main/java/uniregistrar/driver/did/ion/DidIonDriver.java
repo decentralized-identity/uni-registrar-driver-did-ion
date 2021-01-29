@@ -253,6 +253,18 @@ public class DidIonDriver extends AbstractDriver {
 		state.setMethodMetadata(didDocumentMetadata);
 		jsonNode.remove("didDocumentMetadata"); // Remove to prevent duplication
 
+		// Generate Long-Form DID
+		String did = jsonNode.get("didDocument").get("id").asText();
+		String longFormDid = "";
+		try {
+			longFormDid = SidetreeUtils.generateLongFormDID(did, createRequest.toJSONString());
+		} catch (IOException e) {
+			log.error("Cannot generate long-form did", e);
+		}
+
+		jsonNode.put("longFormDid", longFormDid);
+
+
 		// Put secrets
 
 		Map<String, Object> secrets = new LinkedHashMap<>();

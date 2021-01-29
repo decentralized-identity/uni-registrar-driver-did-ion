@@ -62,6 +62,11 @@ public class SidetreeUtils {
 		return Base64.getUrlEncoder().withoutPadding().encodeToString(multihash.toBytes());
 	}
 
+	public static String generateLongFormDID(String did, String createBody) throws IOException {
+		JsonCanonicalizer jc = new JsonCanonicalizer(createBody);
+		return did + ":" + Base64.getUrlEncoder().withoutPadding().encodeToString(jc.getEncodedUTF8());
+	}
+
 	public static String canonicalizeThenDoubleHashThenEncode(JWK jwk) throws IOException {
 		JsonCanonicalizer jc = new JsonCanonicalizer(jwk.toPublicJWK().toJSONString());
 		byte[] hashed = Sha256Hash.hashTwice(jc.getEncodedString().getBytes(StandardCharsets.US_ASCII));
