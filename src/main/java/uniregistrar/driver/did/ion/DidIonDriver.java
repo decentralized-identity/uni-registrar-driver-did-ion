@@ -17,11 +17,10 @@ import uniregistrar.driver.did.ion.util.KeyUtils;
 import uniregistrar.driver.did.ion.util.ParsingException;
 import uniregistrar.driver.did.ion.util.SidetreeUtils;
 import uniregistrar.request.DeactivateRequest;
-import uniregistrar.request.RegisterRequest;
 import uniregistrar.request.UpdateRequest;
+import uniregistrar.state.CreateState;
 import uniregistrar.state.DeactivateState;
-import uniregistrar.state.RegisterState;
-import uniregistrar.state.SetRegisterStateFinished;
+import uniregistrar.state.SetCreateStateFinished;
 import uniregistrar.state.UpdateState;
 
 import java.io.*;
@@ -86,7 +85,7 @@ public class DidIonDriver extends AbstractDriver {
 	}
 
 	@Override
-	public RegisterState register(RegisterRequest request) throws RegistrationException {
+	public CreateState create(uniregistrar.request.CreateRequest request) throws RegistrationException {
 		log.info("Received new registration request");
 		log.debug("Request:\n{}", request::toString);
 
@@ -247,7 +246,7 @@ public class DidIonDriver extends AbstractDriver {
 
 		// Extract Method Metadata
 
-		RegisterState state = RegisterState.build();
+		CreateState state = CreateState.build();
 		Map<String, Object> didDocumentMetadata = mapper.convertValue(jsonNode.get("didDocumentMetadata"),
 																	  new TypeReference<Map<String, Object>>() {});
 		state.setMethodMetadata(didDocumentMetadata);
@@ -281,7 +280,7 @@ public class DidIonDriver extends AbstractDriver {
 //		state.setDidState();
 
 		state.setDidState(mapper.convertValue(jsonNode, new TypeReference<Map<String, Object>>() {}));
-		SetRegisterStateFinished.setStateFinished(state, jsonNode.get("didDocument").get("id").asText(), secrets);
+		SetCreateStateFinished.setStateFinished(state, jsonNode.get("didDocument").get("id").asText(), secrets);
 
 		return state;
 	}
