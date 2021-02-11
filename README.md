@@ -20,6 +20,6 @@ docker run -p 9080:9080 universalregistrar/driver-did-ion
 
 
 ```
-uniregistrar_driver_did_sidetreeApi=<API Endpoint of a Sidetree Node>
+uniregistrar_driver_did_ion_api=<API Endpoint of a ION Node including the operations path>
 ```
 
