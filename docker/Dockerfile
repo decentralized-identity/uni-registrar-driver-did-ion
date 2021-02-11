@@ -16,7 +16,7 @@ RUN cd /opt/driver-did-ion && mvn clean install package -N -DskipTests
 
 ENV uniregistrar_driver_did_ion_api=http://localhost:3000/operations/
 
-# done
+# done
 
 EXPOSE 9080
 
