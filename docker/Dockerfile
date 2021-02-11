@@ -14,7 +14,7 @@ RUN cd /opt/driver-did-ion && mvn clean install package -N -DskipTests
 
 # variables
 
-ENV uniregistrar_driver_did_sidetreeApi=http://localhost:3000/operations/
+ENV uniregistrar_driver_did_ion_api=http://localhost:3000/operations/
 
 # done
 

@@ -72,9 +72,9 @@ public class DidIonDriver extends AbstractDriver {
 
 		try {
 
-			String env_sidetreeApi = System.getenv("uniregistrar_driver_did_sidetreeApi");
+			String env_ion_api = System.getenv("uniregistrar_driver_did_ion_api");
 
-			if (!Strings.isNullOrEmpty(env_sidetreeApi)) properties.put("sidetreeApi", env_sidetreeApi);
+			if (!Strings.isNullOrEmpty(env_ion_api)) properties.put("ion_api", env_ion_api);
 		} catch (Exception ex) {
 
 			throw new IllegalArgumentException(ex.getMessage(), ex);
@@ -95,7 +95,7 @@ public class DidIonDriver extends AbstractDriver {
 			con = (HttpURLConnection) apiUrl.openConnection();
 		} catch (IOException e) {
 			log.error(e.getMessage(), e);
-			throw new RegistrationException("Sidetree API is not reachable..");
+			throw new RegistrationException("ION API is not reachable..");
 		}
 
 		try {
@@ -333,9 +333,9 @@ public class DidIonDriver extends AbstractDriver {
 		log.debug("Configuring from properties: {}", this::getProperties);
 		try {
 
-			String prop_sidetreeApi = (String) properties.get("sidetreeApi");
+			String prop_ion_api = (String) properties.get("ion_api");
 
-			if (!Strings.isNullOrEmpty(prop_sidetreeApi)) this.apiUrl = new URL(prop_sidetreeApi);
+			if (!Strings.isNullOrEmpty(prop_ion_api)) this.apiUrl = new URL(prop_ion_api);
 		} catch (Exception ex) {
 
 			throw new IllegalArgumentException(ex.getMessage(), ex);
