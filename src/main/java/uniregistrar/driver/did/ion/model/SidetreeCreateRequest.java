@@ -6,12 +6,12 @@ import com.nimbusds.jose.util.JSONObjectUtils;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
-public class CreateRequest {
+public class SidetreeCreateRequest {
 	private String type;
 	private SuffixData suffixData;
 	private Delta delta;
 
-	public CreateRequest(String type, SuffixData suffixData, Delta delta) {
+	public SidetreeCreateRequest(String type, SuffixData suffixData, Delta delta) {
 		Preconditions.checkNotNull(type);
 		Preconditions.checkNotNull(suffixData);
 		Preconditions.checkNotNull(delta);
