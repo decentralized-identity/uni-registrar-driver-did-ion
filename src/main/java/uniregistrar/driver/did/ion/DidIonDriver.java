@@ -6,8 +6,9 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
-import foundation.identity.did.Service;
+import org.apache.http.HttpStatus;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import uniregistrar.RegistrationException;
@@ -16,6 +17,7 @@ import uniregistrar.driver.did.ion.model.*;
 import uniregistrar.driver.did.ion.util.KeyUtils;
 import uniregistrar.driver.did.ion.util.ParsingException;
 import uniregistrar.driver.did.ion.util.SidetreeUtils;
+import uniregistrar.request.CreateRequest;
 import uniregistrar.request.DeactivateRequest;
 import uniregistrar.request.UpdateRequest;
 import uniregistrar.state.CreateState;
@@ -37,7 +39,6 @@ public class DidIonDriver extends AbstractDriver {
 	public static final int CONN_TIMEOUT = 5000; // ms
 	public static final int READ_TIMEOUT = 5000; // ms
 	private static final Logger log = LogManager.getLogger(DidIonDriver.class);
-	private static final String DEFAULT_API_URL = "http://localhost:3000/operations";
 	private static final ObjectMapper mapper;
 
 	static {
@@ -54,14 +55,7 @@ public class DidIonDriver extends AbstractDriver {
 
 	public DidIonDriver(Map<String, Object> properties) {
 		setProperties(properties);
-		if (apiUrl == null) {
-			log.info("API URL is not defined, trying with: {}", DEFAULT_API_URL);
-			try {
-				apiUrl = new URL(DEFAULT_API_URL);
-			} catch (MalformedURLException e) {
-				throw new IllegalArgumentException("Default API URL: " + DEFAULT_API_URL);
-			}
-		}
+		if (apiUrl == null) throw new IllegalArgumentException("Sidetree operations API URL is not configured!");
 	}
 
 	private static Map<String, Object> getPropertiesFromEnvironment() {
@@ -84,32 +78,29 @@ public class DidIonDriver extends AbstractDriver {
 
 	}
 
+	public final void setProperties(Map<String, Object> properties) {
+		Preconditions.checkState(this.properties == null, "Properties are already set!");
+		this.properties = Map.copyOf(properties);
+		configureFromProperties();
+	}
+
+	private void configureFromProperties() {
+
+		log.debug("Configuring from properties: {}", properties::toString);
+		try {
+
+			String prop_ion_api = (String) properties.get("ion_api");
+
+			if (!Strings.isNullOrEmpty(prop_ion_api)) this.apiUrl = new URL(prop_ion_api);
+		} catch (MalformedURLException ex) {
+			throw new IllegalArgumentException(ex.getMessage());
+		}
+	}
+
 	@Override
-	public CreateState create(uniregistrar.request.CreateRequest request) throws RegistrationException {
-		log.info("Received new registration request");
-		log.debug("Request:\n{}", request::toString);
+	public CreateState create(CreateRequest request) throws RegistrationException {
 
-		HttpURLConnection con;
-
-		try {
-			con = (HttpURLConnection) apiUrl.openConnection();
-		} catch (IOException e) {
-			log.error(e.getMessage(), e);
-			throw new RegistrationException("ION API is not reachable..");
-		}
-
-		try {
-			con.setRequestMethod("POST");
-		} catch (ProtocolException e) {
-			log.error(e.getMessage(), e);
-			throw new IllegalArgumentException(e);
-		}
-
-		con.setConnectTimeout(CONN_TIMEOUT);
-		con.setReadTimeout(READ_TIMEOUT);
-		con.setRequestProperty("Content-Type", "application/json; utf-8");
-		con.setRequestProperty("Accept", "application/json");
-		con.setDoOutput(true);
+		if (request == null) throw new RegistrationException("Request is null!");
 
 		// Create required keys.
 
@@ -162,24 +153,24 @@ public class DidIonDriver extends AbstractDriver {
 			throw new RegistrationException("Key error!");
 		}
 
-		List<Service> services = request.getDidDocument().getServices();
-
-
 		List<PublicKeyModel> publicKeyModels = new LinkedList<>();
 		publicKeyModels.add(signingKeyPublic);
 
-		List<PublicKeyModel> fromDidDoc;
-		try {
-			fromDidDoc = KeyUtils.extractPublicKeyModels(request.getDidDocument());
-		} catch (ParsingException | InvalidKeySpecException | NoSuchAlgorithmException e) {
-			throw new RegistrationException(e.getMessage());
+		List<PublicKeyModel> fromDidDoc = null;
+		if (request.getDidDocument() != null) {
+			try {
+				fromDidDoc = KeyUtils.extractPublicKeyModels(request.getDidDocument());
+			} catch (ParsingException | InvalidKeySpecException | NoSuchAlgorithmException e) {
+				throw new RegistrationException(e.getMessage());
+			}
 		}
+
 		if (fromDidDoc != null) {
 			publicKeyModels.addAll(fromDidDoc);
 		}
 
 
-		Document document = new Document(publicKeyModels,
+		Document document = new Document(publicKeyModels, request.getDidDocument() == null ? null:
 										 request.getDidDocument().getServices());
 		Patch patch = new Patch("replace", document);
 		Delta delta = new Delta(updateCommitment, Collections.singletonList(patch));
@@ -191,14 +182,36 @@ public class DidIonDriver extends AbstractDriver {
 			throw new RegistrationException("Canonicalization error!");
 		}
 		SuffixData suffixData = new SuffixData(deltaHash, recoveryCommitment);
-		CreateRequest createRequest = new CreateRequest("create", suffixData, delta);
+		SidetreeCreateRequest sidetreeCreateRequest = new SidetreeCreateRequest("create", suffixData, delta);
 
-		log.debug("New ION did creation request prepared:\n{}", createRequest::toJSONString);
+		log.debug("New ION did creation request prepared: {}", sidetreeCreateRequest::toJSONString);
 
 		// Send creation request to the sidetree node
 
+		HttpURLConnection con;
+
+		try {
+			con = (HttpURLConnection) apiUrl.openConnection();
+		} catch (IOException e) {
+			log.error(e);
+			throw new RegistrationException("Sidetree Node is not reachable!");
+		}
+
+		try {
+			con.setRequestMethod("POST");
+		} catch (ProtocolException e) {
+			log.error(e.getMessage(), e);
+			throw new IllegalArgumentException(e);
+		}
+
+		con.setConnectTimeout(CONN_TIMEOUT);
+		con.setReadTimeout(READ_TIMEOUT);
+		con.setRequestProperty("Content-Type", "application/json; utf-8");
+		con.setRequestProperty("Accept", "application/json");
+		con.setDoOutput(true);
+
 		try (OutputStream os = con.getOutputStream()) {
-			byte[] input = createRequest.toJSONString().getBytes(StandardCharsets.UTF_8);
+			byte[] input = sidetreeCreateRequest.toJSONString().getBytes(StandardCharsets.UTF_8);
 			os.write(input, 0, input.length);
 		} catch (IOException e) {
 			log.error(e.getMessage(), e);
@@ -215,21 +228,22 @@ public class DidIonDriver extends AbstractDriver {
 		}
 
 		String response;
-		if (status != 200) {
+		if (status != HttpStatus.SC_OK) {
 			// Get error message
 			try {
 				response = readResponse(con.getErrorStream());
 			} catch (IOException e) {
-				throw new RegistrationException("Internal error!");
+				log.error(e);
+				throw new RegistrationException("Internal error: " + e.getMessage());
 			}
-			throw new RegistrationException("Sidetree Error:\n" + response);
+			throw new RegistrationException("Sidetree Node Error: " + response);
 		}
 		else {
 			// Read the response
 			try {
 				response = readResponse(con.getInputStream());
 			} catch (IOException e) {
-				throw new RegistrationException("Internal error!");
+				throw new RegistrationException("Internal error: " + e.getMessage());
 			}
 		}
 
@@ -256,7 +270,7 @@ public class DidIonDriver extends AbstractDriver {
 		String did = jsonNode.get("didDocument").get("id").asText();
 		String longFormDid = "";
 		try {
-			longFormDid = SidetreeUtils.generateLongFormDID(did, createRequest.toJSONString());
+			longFormDid = SidetreeUtils.generateLongFormDID(did, sidetreeCreateRequest.toJSONString());
 		} catch (IOException e) {
 			log.error("Cannot generate long-form did", e);
 		}
@@ -267,17 +281,9 @@ public class DidIonDriver extends AbstractDriver {
 		// Put secrets
 
 		Map<String, Object> secrets = new LinkedHashMap<>();
-		if (signingKey != null) {
-			secrets.put("signingKey", signingKey.toJSONObject());
-		}
-		if (updateKey != null) {
-			secrets.put("updateKey", updateKey.toJSONObject());
-		}
-		if (recoveryKey != null) {
-			secrets.put("recoveryKey", recoveryKey.toJSONObject());
-		}
-
-//		state.setDidState();
+		if (signingKey != null) secrets.put("signingKey", signingKey.toJSONObject());
+		if (updateKey != null) secrets.put("updateKey", updateKey.toJSONObject());
+		if (recoveryKey != null) secrets.put("recoveryKey", recoveryKey.toJSONObject());
 
 		state.setDidState(mapper.convertValue(jsonNode, new TypeReference<Map<String, Object>>() {}));
 		SetCreateStateFinished.setStateFinished(state, jsonNode.get("didDocument").get("id").asText(), secrets);
@@ -297,7 +303,7 @@ public class DidIonDriver extends AbstractDriver {
 
 	@Override
 	public Map<String, Object> properties() throws RegistrationException {
-		return properties;
+		return Collections.unmodifiableMap(properties);
 	}
 
 	private static String readResponse(InputStream is) throws IOException {
@@ -316,29 +322,5 @@ public class DidIonDriver extends AbstractDriver {
 		}
 
 		return response.toString();
-	}
-
-	public final void setProperties(Map<String, Object> properties) {
-		this.properties = properties;
-		configureFromProperties();
-	}
-
-
-	public Map<String, Object> getProperties() {
-		return properties;
-	}
-
-	private void configureFromProperties() {
-
-		log.debug("Configuring from properties: {}", this::getProperties);
-		try {
-
-			String prop_ion_api = (String) properties.get("ion_api");
-
-			if (!Strings.isNullOrEmpty(prop_ion_api)) this.apiUrl = new URL(prop_ion_api);
-		} catch (Exception ex) {
-
-			throw new IllegalArgumentException(ex.getMessage(), ex);
-		}
 	}
 }
