@@ -170,8 +170,8 @@ public class DidIonDriver extends AbstractDriver {
 		}
 
 
-		Document document = new Document(publicKeyModels, request.getDidDocument() == null ? null:
-										 request.getDidDocument().getServices());
+		Document document = new Document(publicKeyModels, request.getDidDocument() == null ? null :
+														  request.getDidDocument().getServices());
 		Patch patch = new Patch("replace", document);
 		Delta delta = new Delta(updateCommitment, Collections.singletonList(patch));
 		String deltaHash;
@@ -214,7 +214,7 @@ public class DidIonDriver extends AbstractDriver {
 			byte[] input = sidetreeCreateRequest.toJSONString().getBytes(StandardCharsets.UTF_8);
 			os.write(input, 0, input.length);
 		} catch (IOException e) {
-			log.error(e.getMessage(), e);
+			log.error(e.getMessage());
 			throw new RegistrationException("Sidetree node error!");
 		}
 
@@ -263,8 +263,8 @@ public class DidIonDriver extends AbstractDriver {
 		CreateState state = CreateState.build();
 		Map<String, Object> didDocumentMetadata = mapper.convertValue(jsonNode.get("didDocumentMetadata"),
 																	  new TypeReference<Map<String, Object>>() {});
-		state.setMethodMetadata(didDocumentMetadata);
 		jsonNode.remove("didDocumentMetadata"); // Remove to prevent duplication
+		jsonNode.remove("@context");
 
 		// Generate Long-Form DID
 		String did = jsonNode.get("didDocument").get("id").asText();
@@ -275,8 +275,8 @@ public class DidIonDriver extends AbstractDriver {
 			log.error("Cannot generate long-form did", e);
 		}
 
-		jsonNode.put("longFormDid", longFormDid);
-
+		didDocumentMetadata.put("longFormDid", longFormDid);
+		state.setMethodMetadata(didDocumentMetadata);
 
 		// Put secrets
 
