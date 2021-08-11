@@ -39,6 +39,7 @@
 		<java-multihash.version>v1.3.0</java-multihash.version>
 		<bitcoinj.version>0.15.8</bitcoinj.version>
 		<java-json-canonicalization.version>1.1</java-json-canonicalization.version>
+		<nimbus-jose-jwt.version>9.0.1</nimbus-jose-jwt.version>
 	</properties>
 
 	<profiles>
@@ -162,6 +163,12 @@
 			<groupId>org.apache.logging.log4j</groupId>
 			<artifactId>log4j-core</artifactId>
 			<version>${apache.log4j.version}</version>
+			<scope>compile</scope>
+		</dependency>
+		<dependency>
+			<groupId>com.nimbusds</groupId>
+			<artifactId>nimbus-jose-jwt</artifactId>
+			<version>${nimbus-jose-jwt.version}</version>
 			<scope>compile</scope>
 		</dependency>
 	</dependencies>
