@@ -1,18 +1,20 @@
 package uniregistrar.driver.did.ion.util;
 
-import com.danubetech.keyformats.PrivateKey_to_JWK;
 import com.danubetech.keyformats.PublicKey_to_JWK;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
+import com.nimbusds.jose.jwk.Curve;
 import com.nimbusds.jose.jwk.JWK;
+import com.nimbusds.jose.util.Base64URL;
 import foundation.identity.did.DIDDocument;
 import foundation.identity.did.VerificationMethod;
 import org.apache.commons.codec.binary.Base64;
 import org.bitcoinj.core.Base58;
 import org.bitcoinj.core.ECKey;
+import org.bouncycastle.math.ec.ECPoint;
 import uniregistrar.driver.did.ion.model.PublicKeyModel;
 
 import java.security.KeyFactory;
@@ -40,7 +42,13 @@ public class KeyUtils {
 
 	public static JWK generateEs256kKeyPairInJwk() {
 		ECKey key = new ECKey();
-		return PrivateKey_to_JWK.secp256k1PrivateKey_to_JWK(key, null, null);
+		ECPoint publicKeyPoint = key.getPubKeyPoint();
+		byte[] privateKeyBytes = key.getPrivKeyBytes();
+		Base64URL xParameter = Base64URL.encode(publicKeyPoint.getAffineXCoord().getEncoded());
+		Base64URL yParameter = Base64URL.encode(publicKeyPoint.getAffineYCoord().getEncoded());
+		Base64URL dParameter = Base64URL.encode(privateKeyBytes);
+
+		return new com.nimbusds.jose.jwk.ECKey.Builder(Curve.SECP256K1, xParameter, yParameter).d(dParameter).build();
 	}
 
 
@@ -149,12 +157,12 @@ public class KeyUtils {
 			InvalidKeySpecException {
 		switch (keyType) {
 			case EcdsaSecp256k1_VER:
-				return PublicKey_to_JWK.secp256k1PublicKeyBytes_to_JWK(key, null, null).toJSONObject();
+				return PublicKey_to_JWK.secp256k1PublicKeyBytes_to_JWK(key, null, null).toMap();
 			case Ed25519_VER:
-				return PublicKey_to_JWK.Ed25519PublicKeyBytes_to_JWK(key, null, null).toJSONObject();
+				return PublicKey_to_JWK.Ed25519PublicKeyBytes_to_JWK(key, null, null).toMap();
 			case RSA_SIG:
 				KeyFactory kf = KeyFactory.getInstance("RSA");
-				return PublicKey_to_JWK.RSAPublicKey_to_JWK((RSAPublicKey) kf.generatePublic(new X509EncodedKeySpec(key)), null, null).toJSONObject();
+				return PublicKey_to_JWK.RSAPublicKey_to_JWK((RSAPublicKey) kf.generatePublic(new X509EncodedKeySpec(key)), null, null).toMap();
 			default:
 				throw new IllegalArgumentException("Key Type (" + keyType + ") is not supported!");
 		}
