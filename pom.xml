@@ -99,6 +99,14 @@
 
 	<dependencies>
 		<dependency>
+			<groupId>org.slf4j</groupId>
+			<artifactId>jcl-over-slf4j</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>org.apache.logging.log4j</groupId>
+			<artifactId>log4j-slf4j-impl</artifactId>
+		</dependency>
+		<dependency>
 			<groupId>decentralized-identity</groupId>
 			<artifactId>uni-registrar-driver</artifactId>
 			<scope>compile</scope>
@@ -109,11 +117,6 @@
 			<scope>compile</scope>
 		</dependency>
 		<dependency>
-			<groupId>org.apache.logging.log4j</groupId>
-			<artifactId>log4j-slf4j-impl</artifactId>
-			<scope>test</scope>
-		</dependency>
-		<dependency>
 			<groupId>commons-codec</groupId>
 			<artifactId>commons-codec</artifactId>
 			<scope>compile</scope>
@@ -121,8 +124,6 @@
 		<dependency>
 			<groupId>com.danubetech</groupId>
 			<artifactId>key-formats-java</artifactId>
-			<version>${key-formats-java.version}</version>
-			<scope>compile</scope>
 		</dependency>
 		<dependency>
 			<groupId>io.github.erdtman</groupId>
@@ -151,18 +152,6 @@
 		<dependency>
 			<groupId>com.google.guava</groupId>
 			<artifactId>guava</artifactId>
-			<scope>compile</scope>
-		</dependency>
-		<dependency>
-			<groupId>org.apache.logging.log4j</groupId>
-			<artifactId>log4j-api</artifactId>
-			<version>${apache.log4j.version}</version>
-			<scope>compile</scope>
-		</dependency>
-		<dependency>
-			<groupId>org.apache.logging.log4j</groupId>
-			<artifactId>log4j-core</artifactId>
-			<version>${apache.log4j.version}</version>
 			<scope>compile</scope>
 		</dependency>
 		<dependency>
