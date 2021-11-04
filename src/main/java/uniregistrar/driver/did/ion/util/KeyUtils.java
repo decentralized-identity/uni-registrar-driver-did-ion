@@ -29,16 +29,14 @@ import static org.bitcoinj.core.Utils.HEX;
 
 public class KeyUtils {
 
-	public static final String BEGIN_CERT = "-----BEGIN PUBLIC KEY-----";
-	public static final String END_CERT = "-----END PUBLIC KEY-----";
-	public final static String LINE_SEPARATOR = System.getProperty("line.separator");
-
-	public static final List<String> KEY_PURPOSES = Arrays.asList("authentication", "assertionMethod", "capabilityInvocation",
+	public static final String DEFAULT_KEY_ID = "signingKey";
+	public static final String DEFAULT_KEY_TYPE = "EcdsaSecp256k1VerificationKey2019";
+	public static final List<String> DEFAULT_KEY_PURPOSES = Arrays.asList("authentication", "assertionMethod", "capabilityInvocation",
 																  "capabilityDelegation", "keyAgreement");
 	public static final String EcdsaSecp256k1_VER = "EcdsaSecp256k1VerificationKey2019";
 	public static final String Ed25519_VER = "Ed25519VerificationKey2018";
 	public static final String RSA_SIG = "RsaVerificationKey2018";
-	private static final ObjectMapper mapper = new ObjectMapper();
+	protected static final ObjectMapper mapper = new ObjectMapper();
 
 	public static JWK generateEs256kKeyPairInJwk() {
 		ECKey key = new ECKey();
@@ -81,8 +79,7 @@ public class KeyUtils {
 		return keys;
 	}
 
-	public static Map<String, Object> convertToJWK(VerificationMethod vm) throws ParsingException, InvalidKeySpecException, NoSuchAlgorithmException {
-		var keyType = vm.getType();
+	public static Map<String, Object> convertToJWK(VerificationMethod vm) throws InvalidKeySpecException, NoSuchAlgorithmException {
 
 		if (vm.getPublicKeyJwk() != null) {
 			return vm.getPublicKeyJwk();
@@ -113,7 +110,7 @@ public class KeyUtils {
 		JsonNode jsonNode = mapper.convertValue(document.getJsonObject(), JsonNode.class);
 		List<String> purposes = new ArrayList<>();
 
-		for (String p : KEY_PURPOSES) {
+		for (String p : DEFAULT_KEY_PURPOSES) {
 			JsonNode n = jsonNode.get(p);
 
 			if (n == null) continue;
@@ -212,7 +209,7 @@ public class KeyUtils {
 	}
 
 	public enum KeyTag {
-		UPDATE("updateKey"), RECOVERY("recoveryKey"), SIGNING("signingKey"), UNKNOWN("unknownKey");
+		UPDATE("update"), RECOVERY("recovery"), SIGNING("signing"), UNKNOWN("unknown");
 
 		public final String value;
 

@@ -1,6 +1,7 @@
 package uniregistrar.driver.did.ion.model;
 
 import com.nimbusds.jose.util.JSONObjectUtils;
+import uniregistrar.driver.did.ion.util.KeyUtils;
 
 import java.util.*;
 
@@ -49,16 +50,12 @@ public class PublicKeyModel {
 			Map.Entry<String, Object> entry = publicKey.entrySet().iterator().next();
 			o.put(entry.getKey(), entry.getValue());
 		}
-		o.put("purposes", purposes);
+		o.put("purposes", purposes.toArray());
 
 		return o;
 	}
 
 	public static final class Builder {
-		public static final String DEFAULT_KEY_ID = "signingKey";
-		public static final String DEFAULT_KEY_TYPE = "EcdsaSecp256k1VerificationKey2019";
-		public static final List<String> DEFAULT_PURPOSES = Arrays.asList("authentication", "assertionMethod", "capabilityInvocation",
-																		  "capabilityDelegation", "keyAgreement");
 
 		private Map<String, Object> publicKey;
 		private List<String> purposes;
@@ -96,11 +93,11 @@ public class PublicKeyModel {
 
 		public PublicKeyModel build() {
 			Objects.requireNonNull(publicKey);
-			return new PublicKeyModel(id == null ? DEFAULT_KEY_ID : id,
-									  type == null ? DEFAULT_KEY_TYPE : type,
+			return new PublicKeyModel(id == null ? KeyUtils.DEFAULT_KEY_ID : id,
+									  type == null ? KeyUtils.DEFAULT_KEY_TYPE : type,
 									  keyFormat,
 									  publicKey,
-									  purposes == null ? DEFAULT_PURPOSES : purposes);
+									  purposes == null ? KeyUtils.DEFAULT_KEY_PURPOSES : purposes);
 		}
 	}
 }
