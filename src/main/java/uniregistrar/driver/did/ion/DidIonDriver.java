@@ -38,6 +38,9 @@ import java.util.*;
 public class DidIonDriver extends AbstractDriver {
 	public static final int CONN_TIMEOUT = 5000; // ms
 	public static final int READ_TIMEOUT = 5000; // ms
+
+	public static final String[] DEFAULT_SIGNING_KEY_PURPOSES = {"authentication", "assertionMethod", "capabilityInvocation", "capabilityDelegation", "keyAgreement"};
+
 	private static final Logger log = LogManager.getLogger(DidIonDriver.class);
 	private static final ObjectMapper mapper;
 
@@ -118,25 +121,22 @@ public class DidIonDriver extends AbstractDriver {
 
 		if (spk.isPresent()) {
 			signingKeyPublic = spk.get();
-		}
-		else {
-			signingKey = PrivateKeyModel.generateNewPrivateKey(KeyUtils.KeyTag.SIGNING);
+		} else {
+			signingKey = PrivateKeyModel.generateNewPrivateKey(KeyUtils.KeyTag.SIGNING, Arrays.asList(DEFAULT_SIGNING_KEY_PURPOSES));
 			signingKeyPublic = signingKey.getPublicKeyModel();
 		}
 
 		if (upk.isPresent()) {
 			updateKeyPublic = upk.get();
-		}
-		else {
-			updateKey = PrivateKeyModel.generateNewPrivateKey(KeyUtils.KeyTag.UPDATE);
+		} else {
+			updateKey = PrivateKeyModel.generateNewPrivateKey(KeyUtils.KeyTag.UPDATE, List.of("update"));
 			updateKeyPublic = updateKey.getPublicKeyModel();
 		}
 
 		if (rpk.isPresent()) {
 			recoveryKeyPublic = rpk.get();
-		}
-		else {
-			recoveryKey = PrivateKeyModel.generateNewPrivateKey(KeyUtils.KeyTag.RECOVERY);
+		} else {
+			recoveryKey = PrivateKeyModel.generateNewPrivateKey(KeyUtils.KeyTag.RECOVERY, List.of("recovery"));
 			recoveryKeyPublic = recoveryKey.getPublicKeyModel();
 		}
 
@@ -171,7 +171,7 @@ public class DidIonDriver extends AbstractDriver {
 
 
 		Document document = new Document(publicKeyModels, request.getDidDocument() == null ? null :
-														  request.getDidDocument().getServices());
+				request.getDidDocument().getServices());
 		Patch patch = new Patch("replace", document);
 		Delta delta = new Delta(updateCommitment, Collections.singletonList(patch));
 		String deltaHash;
@@ -237,8 +237,7 @@ public class DidIonDriver extends AbstractDriver {
 				throw new RegistrationException("Internal error: " + e.getMessage());
 			}
 			throw new RegistrationException("Sidetree Node Error: " + response);
-		}
-		else {
+		} else {
 			// Read the response
 			try {
 				response = readResponse(con.getInputStream());
@@ -262,7 +261,8 @@ public class DidIonDriver extends AbstractDriver {
 
 		CreateState state = CreateState.build();
 		Map<String, Object> didDocumentMetadata = mapper.convertValue(jsonNode.get("didDocumentMetadata"),
-																	  new TypeReference<Map<String, Object>>() {});
+				new TypeReference<Map<String, Object>>() {
+				});
 		jsonNode.remove("didDocumentMetadata"); // Remove to prevent duplication
 		jsonNode.remove("@context");
 
@@ -280,29 +280,35 @@ public class DidIonDriver extends AbstractDriver {
 
 		// Put secrets
 
-		Map<String, Object> secrets = new LinkedHashMap<>();
-		if (signingKey != null) secrets.put("signingKey", signingKey.toJSONObject());
-		if (updateKey != null) secrets.put("updateKey", updateKey.toJSONObject());
-		if (recoveryKey != null) secrets.put("recoveryKey", recoveryKey.toJSONObject());
+		List<Map<String, Object>> keys = new LinkedList<>();
 
-		state.setDidState(mapper.convertValue(jsonNode, new TypeReference<Map<String, Object>>() {}));
-		SetCreateStateFinished.setStateFinished(state, jsonNode.get("didDocument").get("id").asText(), secrets);
+		if (signingKey != null) {
+			signingKey.addProperty("id", did + "#" + signingKeyPublic.getID());
+			signingKey.addProperty("controller", did);
+			keys.add(signingKey.toJSONObject());
+		}
+		if (updateKey != null) keys.add(updateKey.toJSONObject());
+		if (recoveryKey != null) keys.add(recoveryKey.toJSONObject());
+
+		state.setDidState(mapper.convertValue(jsonNode, new TypeReference<Map<String, Object>>() {
+		}));
+		SetCreateStateFinished.setStateFinished(state, jsonNode.get("didDocument").get("id").asText(), Map.of("verificationMethod", keys));
 
 		return state;
 	}
 
 	@Override
-	public UpdateState update(UpdateRequest request) throws RegistrationException {
+	public UpdateState update(UpdateRequest request) {
 		throw new RuntimeException("Not implemented.");
 	}
 
 	@Override
-	public DeactivateState deactivate(DeactivateRequest request) throws RegistrationException {
+	public DeactivateState deactivate(DeactivateRequest request) {
 		throw new RuntimeException("Not implemented.");
 	}
 
 	@Override
-	public Map<String, Object> properties() throws RegistrationException {
+	public Map<String, Object> properties() {
 		return Collections.unmodifiableMap(properties);
 	}
 
