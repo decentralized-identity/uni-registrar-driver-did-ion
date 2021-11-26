@@ -276,7 +276,7 @@ public class DidIonDriver extends AbstractDriver {
 		}
 
 		didDocumentMetadata.put("longFormDid", longFormDid);
-		state.setMethodMetadata(didDocumentMetadata);
+		state.setDidDocumentMetadata(didDocumentMetadata);
 
 		// Put secrets
 
