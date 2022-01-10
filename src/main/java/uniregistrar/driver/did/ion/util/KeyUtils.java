@@ -75,7 +75,7 @@ public class KeyUtils {
 									.keyFormat("publicKeyJwk")
 									.type(vm.getType())
 									.publicKey(pk)
-									.purposes(parsePurposes(vm.getId().toString(), didDocument))
+									.purposes(parsePurposes(id, didDocument))
 									.build();
 				keys.add(pkm);
 			}
@@ -109,7 +109,7 @@ public class KeyUtils {
 			return null;
 	}
 
-	public static List<String> parsePurposes(String keyId, DIDDocument document) throws ParsingException {
+	public static List<String> parsePurposes(String keyId, DIDDocument document) {
 		Preconditions.checkNotNull(document);
 
 		JsonNode jsonNode = mapper.convertValue(document.getJsonObject(), JsonNode.class);
@@ -126,29 +126,16 @@ public class KeyUtils {
 
 				if (keyNode.size() > 1) {
 					JsonNode vm = keyNode.get("verificationMethod");
-					if (vm != null && keyId.equals(vm.asText().substring(1))) {
+					if (vm != null && keyId.equals(vm.asText())) {
 						purposes.add(p);
 					}
 				}
 				else {
-					String vm = keyNode.asText();
-					String kid;
-					if (vm.startsWith("#")) {
-						kid = vm.substring(1);
-					}
-					else {
-						String[] parseKeyId = vm.split("#");
-						if (parseKeyId.length != 2) {
-							throw new ParsingException();
-						}
-						kid = parseKeyId[1];
-					}
-					if (keyId.equals(kid)) {
+					if (keyId.equals(keyNode.asText())) {
 						purposes.add(p);
 					}
 				}
 			}
-
 		}
 
 		return purposes;
