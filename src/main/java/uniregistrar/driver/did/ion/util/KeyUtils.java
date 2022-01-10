@@ -61,12 +61,17 @@ public class KeyUtils {
 		List<PublicKeyModel> keys = new LinkedList<>();
 		PublicKeyModel pkm;
 
+		String id;
 		for (VerificationMethod vm : didDocument.getVerificationMethods()) {
 			Map<String, Object> pk = convertToJWK(vm);
-
 			if (pk != null) {
+				id = vm.getId().toString();
+				if (!id.startsWith("#")){
+					throw new ParsingException("VerificationMethod format error: ID doesn't start with '#'");
+				}
+
 				pkm = PublicKeyModel.builder()
-									.id(vm.getId().toString())
+									.id(id.substring(1)) // Drops the required prefix of a short ID, '#', because of the ION Node's request format
 									.keyFormat("publicKeyJwk")
 									.type(vm.getType())
 									.publicKey(pk)
