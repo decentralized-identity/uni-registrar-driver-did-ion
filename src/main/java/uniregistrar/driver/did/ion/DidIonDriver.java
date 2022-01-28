@@ -22,7 +22,7 @@ import uniregistrar.request.DeactivateRequest;
 import uniregistrar.request.UpdateRequest;
 import uniregistrar.state.CreateState;
 import uniregistrar.state.DeactivateState;
-import uniregistrar.state.SetCreateStateFinished;
+import uniregistrar.state.SetStateFinished;
 import uniregistrar.state.UpdateState;
 
 import java.io.*;
@@ -292,7 +292,7 @@ public class DidIonDriver extends AbstractDriver {
 
 		state.setDidState(mapper.convertValue(jsonNode, new TypeReference<Map<String, Object>>() {
 		}));
-		SetCreateStateFinished.setStateFinished(state, jsonNode.get("didDocument").get("id").asText(), Map.of("verificationMethod", keys));
+		SetStateFinished.setStateFinished(state, jsonNode.get("didDocument").get("id").asText(), Map.of("verificationMethod", keys));
 
 		return state;
 	}
