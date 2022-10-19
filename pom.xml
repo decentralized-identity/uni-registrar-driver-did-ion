@@ -11,7 +11,7 @@
 	<parent>
 		<groupId>decentralized-identity</groupId>
 		<artifactId>uni-registrar</artifactId>
-		<version>0.3-SNAPSHOT</version>
+		<version>0.4.0</version>
 	</parent>
 
 	<repositories>
@@ -40,7 +40,8 @@
 		<bitcoinj.version>0.15.10</bitcoinj.version>
 		<java-json-canonicalization.version>1.1</java-json-canonicalization.version>
 		<nimbus-jose-jwt.version>9.15.2</nimbus-jose-jwt.version>
-	</properties>
+                <key-formats-java.version>1.1.0</key-formats-java.version>	
+      </properties>
 
 	<profiles>
 		<profile>
@@ -153,6 +154,7 @@
 		<dependency>
 			<groupId>com.danubetech</groupId>
 			<artifactId>key-formats-java</artifactId>
+                        <version>${key-formats-java.version}</version>
 		</dependency>
 		<dependency>
 			<groupId>io.github.erdtman</groupId>
