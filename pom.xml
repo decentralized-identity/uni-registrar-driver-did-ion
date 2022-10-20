@@ -40,7 +40,8 @@
 		<bitcoinj.version>0.15.10</bitcoinj.version>
 		<java-json-canonicalization.version>1.1</java-json-canonicalization.version>
 		<nimbus-jose-jwt.version>9.15.2</nimbus-jose-jwt.version>
-                <key-formats-java.version>1.1.0</key-formats-java.version>	
+                <key-formats-java.version>1.1.0</key-formats-java.version>
+                <did-common-java.version>1.2.0</did-common-java.version>	
       </properties>
 
 	<profiles>
@@ -145,6 +146,7 @@
 			<groupId>decentralized-identity</groupId>
 			<artifactId>did-common-java</artifactId>
 			<scope>compile</scope>
+                        <version>${did-common-java.version}</version>
 		</dependency>
 		<dependency>
 			<groupId>commons-codec</groupId>
